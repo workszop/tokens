@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔤 Byte Pair Encoding (BPE) Visualizer</title>
+    <title>Byte Pair Encoding Visualizer</title>
     <style>
         * {
             margin: 0;
@@ -12,51 +12,61 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #EBF4FF 0%, #E0E7FF 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
             min-height: 100vh;
-            padding: 2rem;
+            padding: 3rem 1.5rem;
+            color: #1a1a1a;
+            line-height: 1.6;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+            font-weight: 400;
         }
 
         .card {
             background: white;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            border: 1px solid #e5e5e5;
             padding: 2rem;
             margin-bottom: 1.5rem;
         }
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #312E81;
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitle {
-            color: #6B7280;
-            font-size: 1.125rem;
-            margin-bottom: 1.5rem;
-        }
-
         .info-box {
-            background: linear-gradient(135deg, #EEF2FF 0%, #DBEAFE 100%);
-            border: 1px solid #C7D2FE;
-            border-radius: 0.75rem;
+            background: #f8f8f8;
+            border-radius: 8px;
             padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #ececec;
         }
 
         .info-box h2 {
-            font-size: 1.25rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            color: #312E81;
-            margin-bottom: 0.75rem;
+            color: #1a1a1a;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .info-box ol {
@@ -67,24 +77,32 @@
         .info-box li {
             counter-increment: item;
             margin-bottom: 0.5rem;
-            color: #374151;
+            color: #4a4a4a;
             display: flex;
             align-items: start;
+            font-size: 0.9rem;
         }
 
         .info-box li:before {
-            content: counter(item) ".";
-            font-weight: bold;
-            color: #4F46E5;
-            margin-right: 0.5rem;
-            min-width: 1.5rem;
+            content: counter(item);
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-right: 0.75rem;
+            min-width: 1.25rem;
+            height: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e5e5e5;
+            border-radius: 4px;
+            font-size: 0.75rem;
         }
 
         .controls-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         @media (min-width: 768px) {
@@ -95,45 +113,52 @@
 
         label {
             display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .target-value {
+            color: #1a1a1a;
+            font-weight: 700;
         }
 
         textarea {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #D1D5DB;
-            border-radius: 0.5rem;
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
+            padding: 0.875rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
             background: white;
             resize: vertical;
+            transition: border-color 0.2s;
         }
 
         textarea:focus {
             outline: none;
-            border-color: #4F46E5;
-            ring: 2px;
-            ring-color: #4F46E5;
+            border-color: #1a1a1a;
         }
 
         .hint {
             font-size: 0.75rem;
-            color: #6B7280;
-            margin-top: 0.25rem;
+            color: #999;
+            margin-top: 0.5rem;
+            font-weight: 400;
         }
 
         .slider-container {
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         input[type="range"] {
             width: 100%;
-            height: 0.5rem;
-            background: #E5E7EB;
-            border-radius: 0.5rem;
+            height: 2px;
+            background: #e0e0e0;
+            border-radius: 2px;
             outline: none;
             -webkit-appearance: none;
         }
@@ -141,41 +166,46 @@
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 1.25rem;
-            height: 1.25rem;
-            background: #4F46E5;
+            width: 18px;
+            height: 18px;
+            background: #1a1a1a;
             cursor: pointer;
             border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         input[type="range"]::-moz-range-thumb {
-            width: 1.25rem;
-            height: 1.25rem;
-            background: #4F46E5;
+            width: 18px;
+            height: 18px;
+            background: #1a1a1a;
             cursor: pointer;
             border-radius: 50%;
-            border: none;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .slider-labels {
             display: flex;
             justify-content: space-between;
-            font-size: 0.75rem;
-            color: #6B7280;
+            font-size: 0.7rem;
+            color: #999;
             margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .button-group {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
         button {
             flex: 1;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
+            padding: 0.75rem 1.25rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-weight: 500;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -183,45 +213,34 @@
             gap: 0.5rem;
             transition: all 0.2s;
             font-size: 0.875rem;
+            background: white;
+            color: #1a1a1a;
+        }
+
+        button:hover:not(:disabled) {
+            background: #1a1a1a;
+            color: white;
+            border-color: #1a1a1a;
         }
 
         button:disabled {
-            background: #9CA3AF !important;
+            background: #f5f5f5;
+            color: #ccc;
             cursor: not-allowed;
+            border-color: #ececec;
         }
 
-        .btn-reset {
-            background: #4B5563;
+        button.active {
+            background: #1a1a1a;
             color: white;
-        }
-
-        .btn-reset:hover:not(:disabled) {
-            background: #374151;
-        }
-
-        .btn-auto {
-            background: #4F46E5;
-            color: white;
-        }
-
-        .btn-auto:hover:not(:disabled) {
-            background: #4338CA;
-        }
-
-        .btn-step {
-            background: #059669;
-            color: white;
-        }
-
-        .btn-step:hover:not(:disabled) {
-            background: #047857;
+            border-color: #1a1a1a;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         @media (min-width: 768px) {
@@ -231,144 +250,127 @@
         }
 
         .stat-card {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid;
-        }
-
-        .stat-card.blue {
-            background: #EFF6FF;
-            border-color: #BFDBFE;
-        }
-
-        .stat-card.green {
-            background: #F0FDF4;
-            border-color: #BBF7D0;
-        }
-
-        .stat-card.purple {
-            background: #FAF5FF;
-            border-color: #E9D5FF;
+            padding: 1.25rem;
+            border-radius: 8px;
+            background: #fafafa;
+            border: 1px solid #ececec;
         }
 
         .stat-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-
-        .stat-card.blue .stat-label { color: #2563EB; }
-        .stat-card.green .stat-label { color: #059669; }
-        .stat-card.purple .stat-label { color: #7C3AED; }
 
         .stat-value {
-            font-size: 1.875rem;
-            font-weight: bold;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
         }
-
-        .stat-card.blue .stat-value { color: #1E3A8A; }
-        .stat-card.green .stat-value { color: #065F46; }
-        .stat-card.purple .stat-value { color: #581C87; }
 
         .alert {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 2px solid;
-            margin-bottom: 1.5rem;
-        }
-
-        .alert.yellow {
-            background: #FFFBEB;
-            border-color: #FBBF24;
-        }
-
-        .alert.green {
-            background: #F0FDF4;
-            border-color: #4ADE80;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid #e0e0e0;
+            background: #fafafa;
         }
 
         .alert-title {
             font-weight: 600;
             margin-bottom: 0.5rem;
+            color: #1a1a1a;
+            font-size: 0.875rem;
         }
-
-        .alert.yellow .alert-title { color: #78350F; }
-        .alert.green .alert-title { color: #065F46; }
 
         .alert-content {
-            font-size: 1.5rem;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
+            font-size: 1.125rem;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-weight: 500;
+            color: #1a1a1a;
         }
 
-        .alert.yellow .alert-content { color: #92400E; }
-        .alert.green .alert-content { color: #065F46; }
+        .alert.success {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .alert.success .alert-title {
+            color: #166534;
+        }
 
         .tokens-box {
-            background: #F9FAFB;
-            border: 1px solid #E5E7EB;
-            border-radius: 0.5rem;
+            background: #fafafa;
+            border: 1px solid #ececec;
+            border-radius: 8px;
             padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .tokens-box h3 {
-            font-size: 1.125rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #111827;
-            margin-bottom: 1rem;
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .tokens-display {
             display: flex;
             flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .word-group {
             display: inline-flex;
             align-items: center;
             background: white;
-            border: 1px solid #E5E7EB;
-            border-radius: 0.5rem;
-            padding: 0.25rem;
-            margin: 0.25rem;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 0.375rem;
+            gap: 0.25rem;
         }
 
         .token {
-            display: inline-block;
             padding: 0.25rem 0.5rem;
-            margin: 0.125rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            font-family: 'Courier New', monospace;
-            transition: all 0.2s;
-            border: 1px solid #93C5FD;
-            background: #DBEAFE;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            transition: all 0.15s;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            font-weight: 500;
         }
 
         .token.highlight {
-            background: #FCD34D;
-            border: 2px solid #F59E0B;
+            background: #fef3c7;
+            color: #92400e;
             transform: scale(1.05);
         }
 
         .vocab-box {
-            background: linear-gradient(135deg, #FAF5FF 0%, #FCE7F3 100%);
-            border: 1px solid #E9D5FF;
-            border-radius: 0.5rem;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
             padding: 1.5rem;
         }
 
         .vocab-box h3 {
-            font-size: 1.125rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #581C87;
-            margin-bottom: 1rem;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .vocab-section {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .vocab-section:last-child {
@@ -376,28 +378,25 @@
         }
 
         .vocab-section h4 {
-            font-size: 1rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .badge {
-            padding: 0.125rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            background: #1a1a1a;
             color: white;
-            font-weight: 600;
-        }
-
-        .badge.blue {
-            background: #2563EB;
-        }
-
-        .badge.purple {
-            background: #7C3AED;
         }
 
         .vocab-tokens {
@@ -408,97 +407,87 @@
 
         .vocab-token {
             padding: 0.5rem 0.75rem;
-            border-radius: 0.5rem;
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-            border: 1px solid;
-        }
-
-        .vocab-token.alphabet {
-            background: #DBEAFE;
-            border-color: #93C5FD;
-        }
-
-        .vocab-token.bpe {
-            background: #E9D5FF;
-            border-color: #C084FC;
-            font-weight: 600;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 0.8rem;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            font-weight: 500;
+            border: 1px solid #e5e5e5;
         }
 
         .vocab-token.new {
-            background: #BBF7D0;
-            border: 2px solid #10B981;
-            font-weight: bold;
-            transform: scale(1.1);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            font-weight: 600;
         }
 
         .vocab-token .length {
-            margin-left: 0.25rem;
-            font-size: 0.75rem;
-            color: #6B7280;
+            margin-left: 0.375rem;
+            font-size: 0.7rem;
+            color: #999;
+            font-weight: 400;
         }
 
         .empty-state {
-            color: #6B7280;
+            color: #999;
             font-style: italic;
-            font-size: 0.875rem;
-            background: white;
-            border: 1px solid #E5E7EB;
-            border-radius: 0.5rem;
-            padding: 1rem;
+            font-size: 0.85rem;
+            background: #fafafa;
+            border: 1px dashed #e0e0e0;
+            border-radius: 6px;
+            padding: 1.25rem;
+            text-align: center;
         }
 
         .legend {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #C084FC;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #ececec;
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             flex-wrap: wrap;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            color: #666;
         }
 
         .legend-box {
-            width: 1rem;
-            height: 1rem;
-            border-radius: 0.125rem;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
         }
 
         .legend-box.alphabet {
-            background: #DBEAFE;
-            border: 1px solid #93C5FD;
-        }
-
-        .legend-box.bpe {
-            background: #E9D5FF;
-            border: 1px solid #C084FC;
+            background: #f5f5f5;
+            border: 1px solid #e5e5e5;
         }
 
         .legend-box.new {
-            background: #BBF7D0;
-            border: 2px solid #10B981;
+            background: #d1fae5;
+            border: 1px solid #6ee7b7;
         }
 
         .history-box {
             background: white;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            border: 1px solid #e5e5e5;
             padding: 2rem;
             margin-bottom: 1.5rem;
         }
 
         .history-box h2 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #312E81;
-            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .history-list {
@@ -511,15 +500,15 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 0.75rem;
-            background: #EEF2FF;
-            border: 1px solid #C7D2FE;
-            border-radius: 0.5rem;
+            padding: 0.875rem;
+            background: #fafafa;
+            border: 1px solid #ececec;
+            border-radius: 6px;
         }
 
         .history-step {
             flex-shrink: 0;
-            width: 4rem;
+            width: 3rem;
             text-align: center;
         }
 
@@ -527,63 +516,65 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 2rem;
-            height: 2rem;
-            background: #4F46E5;
+            width: 28px;
+            height: 28px;
+            background: #1a1a1a;
             color: white;
             border-radius: 50%;
-            font-weight: bold;
-            font-size: 0.875rem;
+            font-weight: 600;
+            font-size: 0.75rem;
         }
 
         .history-merge {
             flex: 1;
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-        }
-
-        .history-merge .token-part {
-            color: #4B5563;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #4a4a4a;
+            font-weight: 500;
         }
 
         .history-merge .operator {
-            color: #4F46E5;
+            color: #999;
             margin: 0 0.5rem;
         }
 
         .history-merge .result {
-            color: #312E81;
-            font-weight: bold;
+            color: #1a1a1a;
+            font-weight: 600;
         }
 
         .history-frequency {
             flex-shrink: 0;
-            background: #F3E8FF;
+            background: white;
             padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            color: #6B21A8;
+            border-radius: 12px;
+            color: #1a1a1a;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            border: 1px solid #e0e0e0;
         }
 
         .note-box {
             background: white;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            border: 1px solid #e5e5e5;
             padding: 2rem;
         }
 
         .note-box h2 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #312E81;
-            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .note-box p {
-            color: #374151;
-            line-height: 1.75;
+            color: #4a4a4a;
+            line-height: 1.7;
             margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
 
         .note-box p:last-child {
@@ -591,60 +582,60 @@
         }
 
         .note-box code {
-            background: #F3F4F6;
-            padding: 0.125rem 0.5rem;
-            border-radius: 0.25rem;
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-            color: #4F46E5;
+            background: #f5f5f5;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #1a1a1a;
+            border: 1px solid #e5e5e5;
         }
 
         .hidden {
             display: none;
         }
 
-        .target-value {
-            color: #4F46E5;
-            font-weight: bold;
+        svg {
+            flex-shrink: 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <h1>🔤 Byte Pair Encoding (BPE)</h1>
-            <p class="subtitle">
-                Wizualizacja algorytmu tokenizacji używanego w GPT i innych modelach językowych
-            </p>
+        <div class="header">
+            <h1>Byte Pair Encoding</h1>
+            <p class="subtitle">Visualization of the tokenization algorithm used in GPT and other language models</p>
+        </div>
 
+        <div class="card">
             <div class="info-box">
-                <h2>📚 Jak to działa?</h2>
+                <h2>How it works</h2>
                 <ol>
-                    <li>Zaczynamy od pojedynczych znaków jako tokenów</li>
-                    <li>Znajdujemy najczęściej występującą parę sąsiednich tokenów</li>
-                    <li>Łączymy tę parę w nowy token</li>
-                    <li>Powtarzamy proces aż osiągniemy docelową wielkość słownika</li>
+                    <li>Start with individual characters as tokens</li>
+                    <li>Find the most frequent pair of adjacent tokens</li>
+                    <li>Merge that pair into a new token</li>
+                    <li>Repeat until reaching the target vocabulary size</li>
                 </ol>
             </div>
 
             <div class="controls-grid">
                 <div>
-                    <label>📝 Twój tekst do tokenizacji:</label>
-                    <textarea id="inputText" rows="3" placeholder="Wpisz tekst z powtarzającymi się słowami...">the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.</textarea>
-                    <p class="hint">💡 Zmień tekst i naciśnij <strong>Reset</strong> lub kliknij poza pole</p>
+                    <label>Input Text</label>
+                    <textarea id="inputText" rows="3" placeholder="Enter text with repeating patterns...">the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.</textarea>
+                    <p class="hint">Change text and click outside or press Reset</p>
                 </div>
                 <div>
-                    <label>🎯 Docelowa wielkość słownika: <span class="target-value" id="targetValue">30</span></label>
+                    <label>Target Vocabulary Size: <span class="target-value" id="targetValue">30</span></label>
                     <div class="slider-container">
                         <input type="range" id="targetSlider" min="10" max="100" value="30">
                     </div>
                     <div class="slider-labels">
-                        <span>Mniej tokenów</span>
-                        <span>Więcej tokenów</span>
+                        <span>Fewer</span>
+                        <span>More</span>
                     </div>
                     <div class="button-group">
-                        <button class="btn-reset" id="resetBtn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button id="resetBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
                                 <path d="M21 3v5h-5"/>
                                 <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
@@ -652,72 +643,72 @@
                             </svg>
                             Reset
                         </button>
-                        <button class="btn-auto" id="autoBtn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button id="autoBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polygon points="5 3 19 12 5 21 5 3"/>
                             </svg>
                             <span id="autoText">Auto</span>
                         </button>
-                        <button class="btn-step" id="stepBtn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button id="stepBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="9 18 15 12 9 6"/>
                             </svg>
-                            Krok
+                            Step
                         </button>
                     </div>
                 </div>
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card blue">
-                    <div class="stat-label">Aktualny krok</div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Step</div>
                     <div class="stat-value" id="stepCount">0</div>
                 </div>
-                <div class="stat-card green">
-                    <div class="stat-label">Wielkość słownika</div>
+                <div class="stat-card">
+                    <div class="stat-label">Vocabulary Size</div>
                     <div class="stat-value"><span id="vocabSize">0</span> / <span id="vocabTarget">30</span></div>
                 </div>
-                <div class="stat-card purple">
-                    <div class="stat-label">Liczba tokenów</div>
+                <div class="stat-card">
+                    <div class="stat-label">Token Count</div>
                     <div class="stat-value" id="tokenCount">0</div>
                 </div>
             </div>
 
-            <div id="bestPairAlert" class="alert yellow hidden">
-                <div class="alert-title">🎯 Najczęstsza para (wystąpienia: <span id="pairFrequency">0</span>):</div>
+            <div id="bestPairAlert" class="alert hidden">
+                <div class="alert-title">Most frequent pair (<span id="pairFrequency">0</span> occurrences)</div>
                 <div class="alert-content" id="pairDisplay"></div>
             </div>
 
-            <div id="completedAlert" class="alert green hidden">
-                <div class="alert-title" style="text-align: center; font-size: 1.125rem;">
-                    ✅ Osiągnięto docelową wielkość słownika!
+            <div id="completedAlert" class="alert success hidden">
+                <div class="alert-title" style="text-align: center;">
+                    Target vocabulary size reached
                 </div>
             </div>
 
             <div class="tokens-box">
-                <h3>Aktualne tokeny (żółte = będą połączone):</h3>
+                <h3>Current Tokens</h3>
                 <div class="tokens-display" id="tokensDisplay"></div>
             </div>
 
             <div class="vocab-box">
-                <h3>📚 Słownik tokenów (<span id="totalVocabSize">0</span> tokenów):</h3>
+                <h3>Vocabulary (<span id="totalVocabSize">0</span> tokens)</h3>
 
                 <div class="vocab-section">
                     <h4>
-                        <span class="badge blue">ALFABET</span>
-                        Podstawowe tokeny (pojedyncze znaki)
+                        <span class="badge">Alphabet</span>
+                        Single character tokens
                     </h4>
                     <div class="vocab-tokens" id="alphabetTokens"></div>
                 </div>
 
                 <div class="vocab-section">
                     <h4>
-                        <span class="badge purple">BPE</span>
-                        Tokeny utworzone przez algorytm (<span id="bpeCount">0</span> tokenów)
+                        <span class="badge">BPE</span>
+                        Merged tokens (<span id="bpeCount">0</span>)
                     </h4>
                     <div id="bpeTokensContainer">
                         <div class="empty-state">
-                            Naciśnij "Krok" lub "Auto" aby algorytm zaczął tworzyć nowe tokeny...
+                            Click "Step" or "Auto" to start creating tokens
                         </div>
                     </div>
                 </div>
@@ -725,35 +716,31 @@
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-box alphabet"></div>
-                        <span style="color: #4B5563;">Tokeny alfabetu</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-box bpe"></div>
-                        <span style="color: #4B5563;">Tokeny BPE</span>
+                        <span>Base tokens</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-box new"></div>
-                        <span style="color: #4B5563;">Nowo utworzony</span>
+                        <span>Newly created</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="historyBox" class="history-box hidden">
-            <h2>📊 Historia połączeń</h2>
+            <h2>Merge History</h2>
             <div class="history-list" id="historyList"></div>
         </div>
 
         <div class="note-box">
-            <h2>💡 Nota techniczna</h2>
+            <h2>Technical Note</h2>
             <p>
-                W tej wizualizacji pominięto znacznik końca słowa (zazwyczaj oznaczany jako <code>&lt;/w&gt;</code>) dla przejrzystości.
-                W prawdziwym BPE każdy ostatni znak słowa jest oznaczony specjalnym symbolem, który pozwala algorytmowi odróżnić
-                np. token "er" na końcu słowa ("lower") od "er" w środku ("merry").
+                This visualization omits the end-of-word marker (typically denoted as <code>&lt;/w&gt;</code>) for clarity.
+                In real BPE, each word's final character is marked with a special symbol, allowing the algorithm to distinguish
+                tokens like "er" at the end of a word ("lower") from "er" in the middle ("merry").
             </p>
             <p>
-                Dzięki temu BPE "wie", że nie powinien łączyć tokenów z różnych słów. W tej aplikacji używamy separatora <code>|</code> między słowami,
-                który pełni podobną rolę, ale jest ukryty w wyświetlaniu.
+                This ensures BPE knows not to merge tokens across word boundaries. In this app, we use a <code>|</code> separator between words
+                that serves a similar role but is hidden from display.
             </p>
         </div>
     </div>
@@ -912,13 +899,15 @@
                 return;
             }
             state.isPlaying = true;
-            elements.autoText.textContent = 'Zatrzymaj';
+            elements.autoText.textContent = 'Stop';
+            elements.autoBtn.classList.add('active');
             performMerge();
         }
 
         function stopAutoPlay() {
             state.isPlaying = false;
             elements.autoText.textContent = 'Auto';
+            elements.autoBtn.classList.remove('active');
             if (state.autoPlayTimer) {
                 clearTimeout(state.autoPlayTimer);
                 state.autoPlayTimer = null;
@@ -992,7 +981,7 @@
             elements.bpeCount.textContent = bpeVocab.length;
 
             if (bpeVocab.length === 0) {
-                elements.bpeTokensContainer.innerHTML = '<div class="empty-state">Naciśnij "Krok" lub "Auto" aby algorytm zaczął tworzyć nowe tokeny...</div>';
+                elements.bpeTokensContainer.innerHTML = '<div class="empty-state">Click "Step" or "Auto" to start creating tokens</div>';
             } else {
                 const container = document.createElement('div');
                 container.className = 'vocab-tokens';
@@ -1002,7 +991,7 @@
                                   state.mergeHistory[state.mergeHistory.length - 1].newToken === token;
 
                     const span = document.createElement('span');
-                    span.className = 'vocab-token bpe' + (isNew ? ' new' : '');
+                    span.className = 'vocab-token' + (isNew ? ' new' : '');
                     span.innerHTML = `"${token}"<span class="length">(${token.length})</span>`;
                     container.appendChild(span);
                 });

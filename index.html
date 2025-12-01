@@ -1,441 +1,1099 @@
-import React, { useState, useEffect } from 'react';
-import { Play, RotateCcw, ChevronRight } from 'lucide-react';
-
-export default function BPETokenizer() {
-  const SAMPLE_TEXT = "the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.";
-  const TARGET_TOKENS = 30;
-  
-  const [text, setText] = useState(SAMPLE_TEXT);
-  const [targetVocabSize, setTargetVocabSize] = useState(TARGET_TOKENS);
-  const [tokens, setTokens] = useState([]);
-  const [vocabulary, setVocabulary] = useState(new Set());
-  const [step, setStep] = useState(0);
-  const [mergeHistory, setMergeHistory] = useState([]);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentPairs, setCurrentPairs] = useState({});
-  const [bestPair, setBestPair] = useState(null);
-
-  // Initialize tokens from text
-  const initializeTokens = () => {
-    // Stop auto-play first
-    setIsPlaying(false);
-    
-    const words = text.toLowerCase().split(/\s+/).filter(w => w);
-    // Split each word into characters and add a separator between words
-    const initialTokens = [];
-    words.forEach((word, idx) => {
-      initialTokens.push(...word.split(''));
-      if (idx < words.length - 1) {
-        initialTokens.push('|'); // Word boundary marker
-      }
-    });
-    
-    const vocab = new Set(initialTokens);
-    
-    setTokens(initialTokens);
-    setVocabulary(vocab);
-    setStep(0);
-    setMergeHistory([]);
-    setBestPair(null);
-    setCurrentPairs({});
-    
-    // Calculate pairs after state is set
-    setTimeout(() => {
-      calculatePairFrequencies(initialTokens);
-    }, 0);
-  };
-
-  useEffect(() => {
-    initializeTokens();
-  }, []);
-
-  // Calculate pair frequencies
-  const calculatePairFrequencies = (currentTokens) => {
-    const pairs = {};
-    for (let i = 0; i < currentTokens.length - 1; i++) {
-      // Skip if either token is a word boundary
-      if (currentTokens[i] === '|' || currentTokens[i + 1] === '|') {
-        continue;
-      }
-      const pair = currentTokens[i] + ' ' + currentTokens[i + 1];
-      pairs[pair] = (pairs[pair] || 0) + 1;
-    }
-    
-    setCurrentPairs(pairs);
-    
-    // Find best pair
-    let maxCount = 0;
-    let best = null;
-    for (const [pair, count] of Object.entries(pairs)) {
-      if (count > maxCount) {
-        maxCount = count;
-        best = pair;
-      }
-    }
-    setBestPair(best);
-    return best;
-  };
-
-  // Perform one merge step
-  const performMerge = () => {
-    if (!bestPair || vocabulary.size >= targetVocabSize) {
-      setIsPlaying(false);
-      return;
-    }
-
-    const [token1, token2] = bestPair.split(' ');
-    const newToken = token1 + token2;
-    
-    // Merge tokens
-    const newTokens = [];
-    let i = 0;
-    while (i < tokens.length) {
-      if (i < tokens.length - 1 && tokens[i] === token1 && tokens[i + 1] === token2) {
-        newTokens.push(newToken);
-        i += 2;
-      } else {
-        newTokens.push(tokens[i]);
-        i += 1;
-      }
-    }
-
-    setTokens(newTokens);
-    setVocabulary(new Set([...vocabulary, newToken]));
-    setMergeHistory([...mergeHistory, { 
-      step: step + 1, 
-      pair: bestPair, 
-      newToken,
-      frequency: currentPairs[bestPair]
-    }]);
-    setStep(step + 1);
-    
-    calculatePairFrequencies(newTokens);
-  };
-
-  // Auto-play functionality
-  useEffect(() => {
-    if (isPlaying && vocabulary.size < targetVocabSize && bestPair) {
-      const timer = setTimeout(() => {
-        performMerge();
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (isPlaying) {
-      setIsPlaying(false);
-    }
-  }, [isPlaying, vocabulary.size, bestPair, tokens]);
-
-  // Render tokens with word boundaries
-  const renderTokens = () => {
-    const result = [];
-    let currentWord = [];
-    
-    tokens.forEach((token, idx) => {
-      if (token === '|') {
-        // End of word - add space
-        if (currentWord.length > 0) {
-          result.push(
-            <div key={`word-${idx}`} className="inline-flex items-center bg-white rounded-lg p-1 m-1 shadow-sm border border-gray-200">
-              {currentWord}
-            </div>
-          );
-          currentWord = [];
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔤 Byte Pair Encoding (BPE) Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        return;
-      }
-      
-      const isPartOfBestPair = bestPair && (
-        (idx < tokens.length - 1 && tokens[idx] + ' ' + tokens[idx + 1] === bestPair) ||
-        (idx > 0 && tokens[idx - 1] + ' ' + tokens[idx] === bestPair)
-      );
-      
-      currentWord.push(
-        <span
-          key={idx}
-          className={`inline-block px-1.5 py-0.5 m-0.5 rounded text-sm font-mono transition-all ${
-            isPartOfBestPair 
-              ? 'bg-yellow-300 border-2 border-yellow-500 scale-105' 
-              : 'bg-blue-100 border border-blue-300'
-          }`}
-        >
-          {token}
-        </span>
-      );
-    });
-    
-    // Add last word if exists
-    if (currentWord.length > 0) {
-      result.push(
-        <div key="word-last" className="inline-flex items-center bg-white rounded-lg p-1 m-1 shadow-sm border border-gray-200">
-          {currentWord}
-        </div>
-      );
-    }
-    
-    return result;
-  };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
-          <h1 className="text-4xl font-bold text-indigo-900 mb-2">
-            🔤 Byte Pair Encoding (BPE)
-          </h1>
-          <p className="text-gray-600 text-lg mb-6">
-            Wizualizacja algorytmu tokenizacji używanego w GPT i innych modelach językowych
-          </p>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #EBF4FF 0%, #E0E7FF 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
 
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 mb-6 border border-indigo-200">
-            <h2 className="text-xl font-semibold text-indigo-900 mb-3">📚 Jak to działa?</h2>
-            <ol className="space-y-2 text-gray-700">
-              <li className="flex items-start">
-                <span className="font-bold text-indigo-600 mr-2">1.</span>
-                <span>Zaczynamy od pojedynczych znaków jako tokenów</span>
-              </li>
-              <li className="flex items-start">
-                <span className="font-bold text-indigo-600 mr-2">2.</span>
-                <span>Znajdujemy najczęściej występującą parę sąsiednich tokenów</span>
-              </li>
-              <li className="flex items-start">
-                <span className="font-bold text-indigo-600 mr-2">3.</span>
-                <span>Łączymy tę parę w nowy token</span>
-              </li>
-              <li className="flex items-start">
-                <span className="font-bold text-indigo-600 mr-2">4.</span>
-                <span>Powtarzamy proces aż osiągniemy docelową wielkość słownika</span>
-              </li>
-            </ol>
-          </div>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📝 Twój tekst do tokenizacji:
-              </label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onBlur={initializeTokens}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm bg-white"
-                rows="3"
-                placeholder="Wpisz tekst z powtarzającymi się słowami..."
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                💡 Zmień tekst i naciśnij <strong>Reset</strong> lub kliknij poza pole
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🎯 Docelowa wielkość słownika: <span className="text-indigo-600 font-bold">{targetVocabSize}</span>
-              </label>
-              <input
-                type="range"
-                min="10"
-                max="100"
-                value={targetVocabSize}
-                onChange={(e) => setTargetVocabSize(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mb-4">
-                <span>Mniej tokenów</span>
-                <span>Więcej tokenów</span>
-              </div>
-              <div className="flex justify-between mt-4 gap-2">
-                <button
-                  onClick={initializeTokens}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold"
-                >
-                  <RotateCcw size={20} />
-                  Reset
-                </button>
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  disabled={vocabulary.size >= targetVocabSize || !bestPair}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold"
-                >
-                  <Play size={20} />
-                  {isPlaying ? 'Zatrzymaj' : 'Auto'}
-                </button>
-                <button
-                  onClick={performMerge}
-                  disabled={vocabulary.size >= targetVocabSize || !bestPair}
-                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold"
-                >
-                  <ChevronRight size={20} />
-                  Krok
-                </button>
-              </div>
-            </div>
-          </div>
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <div className="text-sm text-blue-600 font-medium">Aktualny krok</div>
-              <div className="text-3xl font-bold text-blue-900">{step}</div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <div className="text-sm text-green-600 font-medium">Wielkość słownika</div>
-              <div className="text-3xl font-bold text-green-900">{vocabulary.size} / {targetVocabSize}</div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-              <div className="text-sm text-purple-600 font-medium">Liczba tokenów</div>
-              <div className="text-3xl font-bold text-purple-900">{tokens.length}</div>
-            </div>
-          </div>
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #312E81;
+            margin-bottom: 0.5rem;
+        }
 
-          {bestPair && vocabulary.size < targetVocabSize && (
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6">
-              <div className="font-semibold text-yellow-900 mb-2">
-                🎯 Najczęstsza para (wystąpienia: {currentPairs[bestPair]}):
-              </div>
-              <div className="text-2xl font-mono font-bold text-yellow-800">
-                "{bestPair.split(' ')[0]}" + "{bestPair.split(' ')[1]}" → "{bestPair.replace(' ', '')}"
-              </div>
-            </div>
-          )}
+        .subtitle {
+            color: #6B7280;
+            font-size: 1.125rem;
+            margin-bottom: 1.5rem;
+        }
 
-          {vocabulary.size >= targetVocabSize && (
-            <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4 mb-6">
-              <div className="font-semibold text-green-900 text-center text-lg">
-                ✅ Osiągnięto docelową wielkość słownika!
-              </div>
-            </div>
-          )}
+        .info-box {
+            background: linear-gradient(135deg, #EEF2FF 0%, #DBEAFE 100%);
+            border: 1px solid #C7D2FE;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
 
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Aktualne tokeny (żółte = będą połączone):
-            </h3>
-            <div className="flex flex-wrap">
-              {renderTokens()}
-            </div>
-          </div>
+        .info-box h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #312E81;
+            margin-bottom: 0.75rem;
+        }
 
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border border-purple-200">
-            <h3 className="text-lg font-semibold text-purple-900 mb-4">
-              📚 Słownik tokenów ({vocabulary.size} tokenów):
-            </h3>
-            
-            {/* Alphabet tokens */}
-            <div className="mb-6">
-              <h4 className="text-md font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">ALFABET</span>
-                Podstawowe tokeny (pojedyncze znaki)
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {Array.from(vocabulary)
-                  .filter(t => t !== '|' && t.length === 1)
-                  .sort()
-                  .map((token, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1.5 rounded-lg font-mono text-sm bg-blue-100 border border-blue-300"
-                    >
-                      {token}
-                    </span>
-                  ))}
-              </div>
-            </div>
+        .info-box ol {
+            list-style: none;
+            counter-reset: item;
+        }
 
-            {/* BPE-created tokens */}
-            <div>
-              <h4 className="text-md font-semibold text-purple-800 mb-3 flex items-center gap-2">
-                <span className="bg-purple-600 text-white px-2 py-0.5 rounded text-xs">BPE</span>
-                Tokeny utworzone przez algorytm ({Array.from(vocabulary).filter(t => t !== '|' && t.length > 1).length} tokenów)
-              </h4>
-              {Array.from(vocabulary).filter(t => t !== '|' && t.length > 1).length === 0 ? (
-                <div className="text-gray-500 italic text-sm bg-white rounded-lg p-4 border border-gray-200">
-                  Naciśnij "Krok" lub "Auto" aby algorytm zaczął tworzyć nowe tokeny...
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(vocabulary)
-                    .filter(t => t !== '|' && t.length > 1)
-                    .sort((a, b) => {
-                      // Sort by length (longer tokens first), then alphabetically
-                      if (a.length !== b.length) return b.length - a.length;
-                      return a.localeCompare(b);
-                    })
-                    .map((token, idx) => {
-                      const isNew = mergeHistory.length > 0 && 
-                                    mergeHistory[mergeHistory.length - 1].newToken === token;
-                      return (
-                        <span
-                          key={idx}
-                          className={`px-3 py-1.5 rounded-lg font-mono text-sm transition-all ${
-                            isNew
-                              ? 'bg-green-200 border-2 border-green-500 font-bold scale-110 shadow-lg'
-                              : 'bg-purple-100 border border-purple-300 font-semibold'
-                          }`}
-                        >
-                          "{token}"
-                          <span className="ml-1 text-xs text-gray-500">({token.length})</span>
-                        </span>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-purple-300 flex gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></span>
-                <span className="text-gray-600">Tokeny alfabetu</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></span>
-                <span className="text-gray-600">Tokeny BPE</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-green-200 border-2 border-green-500 rounded"></span>
-                <span className="text-gray-600">Nowo utworzony</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        .info-box li {
+            counter-increment: item;
+            margin-bottom: 0.5rem;
+            color: #374151;
+            display: flex;
+            align-items: start;
+        }
 
-        {mergeHistory.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
-            <h2 className="text-2xl font-bold text-indigo-900 mb-4">📊 Historia połączeń</h2>
-            <div className="space-y-2">
-              {mergeHistory.map((merge, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                  <div className="flex-shrink-0 w-16 text-center">
-                    <span className="inline-block bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                      {merge.step}
-                    </span>
-                  </div>
-                  <div className="flex-1 font-mono text-sm">
-                    <span className="text-gray-600">"{merge.pair.split(' ')[0]}"</span>
-                    <span className="text-indigo-600 mx-2">+</span>
-                    <span className="text-gray-600">"{merge.pair.split(' ')[1]}"</span>
-                    <span className="text-indigo-600 mx-2">→</span>
-                    <span className="text-indigo-900 font-bold">"{merge.newToken}"</span>
-                  </div>
-                  <div className="flex-shrink-0 bg-purple-100 px-3 py-1 rounded-full text-purple-800 font-semibold text-sm">
-                    {merge.frequency}×
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        .info-box li:before {
+            content: counter(item) ".";
+            font-weight: bold;
+            color: #4F46E5;
+            margin-right: 0.5rem;
+            min-width: 1.5rem;
+        }
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-indigo-900 mb-4">💡 Nota techniczna</h2>
-          <div className="prose prose-indigo max-w-none">
-            <p className="text-gray-700 leading-relaxed mb-4">
-              W tej wizualizacji pominięto znacznik końca słowa (zazwyczaj oznaczany jako <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-indigo-600">&lt;/w&gt;</code>) dla przejrzystości. 
-              W prawdziwym BPE każdy ostatni znak słowa jest oznaczony specjalnym symbolem, który pozwala algorytmowi odróżnić 
-              np. token "er" na końcu słowa ("lower") od "er" w środku ("merry").
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #D1D5DB;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            background: white;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4F46E5;
+            ring: 2px;
+            ring-color: #4F46E5;
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-top: 0.25rem;
+        }
+
+        .slider-container {
+            margin-bottom: 1rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 0.5rem;
+            background: #E5E7EB;
+            border-radius: 0.5rem;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #4F46E5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 1.25rem;
+            height: 1.25rem;
+            background: #4F46E5;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-bottom: 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        button:disabled {
+            background: #9CA3AF !important;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: #4B5563;
+            color: white;
+        }
+
+        .btn-reset:hover:not(:disabled) {
+            background: #374151;
+        }
+
+        .btn-auto {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .btn-auto:hover:not(:disabled) {
+            background: #4338CA;
+        }
+
+        .btn-step {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-step:hover:not(:disabled) {
+            background: #047857;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .stat-card {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid;
+        }
+
+        .stat-card.blue {
+            background: #EFF6FF;
+            border-color: #BFDBFE;
+        }
+
+        .stat-card.green {
+            background: #F0FDF4;
+            border-color: #BBF7D0;
+        }
+
+        .stat-card.purple {
+            background: #FAF5FF;
+            border-color: #E9D5FF;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card.blue .stat-label { color: #2563EB; }
+        .stat-card.green .stat-label { color: #059669; }
+        .stat-card.purple .stat-label { color: #7C3AED; }
+
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: bold;
+        }
+
+        .stat-card.blue .stat-value { color: #1E3A8A; }
+        .stat-card.green .stat-value { color: #065F46; }
+        .stat-card.purple .stat-value { color: #581C87; }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert.yellow {
+            background: #FFFBEB;
+            border-color: #FBBF24;
+        }
+
+        .alert.green {
+            background: #F0FDF4;
+            border-color: #4ADE80;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert.yellow .alert-title { color: #78350F; }
+        .alert.green .alert-title { color: #065F46; }
+
+        .alert-content {
+            font-size: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .alert.yellow .alert-content { color: #92400E; }
+        .alert.green .alert-content { color: #065F46; }
+
+        .tokens-box {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tokens-box h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 1rem;
+        }
+
+        .tokens-display {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .word-group {
+            display: inline-flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            padding: 0.25rem;
+            margin: 0.25rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .token {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            margin: 0.125rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+            border: 1px solid #93C5FD;
+            background: #DBEAFE;
+        }
+
+        .token.highlight {
+            background: #FCD34D;
+            border: 2px solid #F59E0B;
+            transform: scale(1.05);
+        }
+
+        .vocab-box {
+            background: linear-gradient(135deg, #FAF5FF 0%, #FCE7F3 100%);
+            border: 1px solid #E9D5FF;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .vocab-box h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #581C87;
+            margin-bottom: 1rem;
+        }
+
+        .vocab-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .vocab-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .vocab-section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .badge.blue {
+            background: #2563EB;
+        }
+
+        .badge.purple {
+            background: #7C3AED;
+        }
+
+        .vocab-tokens {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .vocab-token {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            border: 1px solid;
+        }
+
+        .vocab-token.alphabet {
+            background: #DBEAFE;
+            border-color: #93C5FD;
+        }
+
+        .vocab-token.bpe {
+            background: #E9D5FF;
+            border-color: #C084FC;
+            font-weight: 600;
+        }
+
+        .vocab-token.new {
+            background: #BBF7D0;
+            border: 2px solid #10B981;
+            font-weight: bold;
+            transform: scale(1.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .vocab-token .length {
+            margin-left: 0.25rem;
+            font-size: 0.75rem;
+            color: #6B7280;
+        }
+
+        .empty-state {
+            color: #6B7280;
+            font-style: italic;
+            font-size: 0.875rem;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .legend {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #C084FC;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-box {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 0.125rem;
+        }
+
+        .legend-box.alphabet {
+            background: #DBEAFE;
+            border: 1px solid #93C5FD;
+        }
+
+        .legend-box.bpe {
+            background: #E9D5FF;
+            border: 1px solid #C084FC;
+        }
+
+        .legend-box.new {
+            background: #BBF7D0;
+            border: 2px solid #10B981;
+        }
+
+        .history-box {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .history-box h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #312E81;
+            margin-bottom: 1rem;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: #EEF2FF;
+            border: 1px solid #C7D2FE;
+            border-radius: 0.5rem;
+        }
+
+        .history-step {
+            flex-shrink: 0;
+            width: 4rem;
+            text-align: center;
+        }
+
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            background: #4F46E5;
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        .history-merge {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .history-merge .token-part {
+            color: #4B5563;
+        }
+
+        .history-merge .operator {
+            color: #4F46E5;
+            margin: 0 0.5rem;
+        }
+
+        .history-merge .result {
+            color: #312E81;
+            font-weight: bold;
+        }
+
+        .history-frequency {
+            flex-shrink: 0;
+            background: #F3E8FF;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            color: #6B21A8;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .note-box {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 2rem;
+        }
+
+        .note-box h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #312E81;
+            margin-bottom: 1rem;
+        }
+
+        .note-box p {
+            color: #374151;
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+
+        .note-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .note-box code {
+            background: #F3F4F6;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #4F46E5;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .target-value {
+            color: #4F46E5;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔤 Byte Pair Encoding (BPE)</h1>
+            <p class="subtitle">
+                Wizualizacja algorytmu tokenizacji używanego w GPT i innych modelach językowych
             </p>
-            <p className="text-gray-700 leading-relaxed">
-              Dzięki temu BPE "wie", że nie powinien łączyć tokenów z różnych słów. W tej aplikacji używamy separatora <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-indigo-600">|</code> między słowami, 
-              który pełni podobną rolę, ale jest ukryty w wyświetlaniu.
-            </p>
-          </div>
+
+            <div class="info-box">
+                <h2>📚 Jak to działa?</h2>
+                <ol>
+                    <li>Zaczynamy od pojedynczych znaków jako tokenów</li>
+                    <li>Znajdujemy najczęściej występującą parę sąsiednich tokenów</li>
+                    <li>Łączymy tę parę w nowy token</li>
+                    <li>Powtarzamy proces aż osiągniemy docelową wielkość słownika</li>
+                </ol>
+            </div>
+
+            <div class="controls-grid">
+                <div>
+                    <label>📝 Twój tekst do tokenizacji:</label>
+                    <textarea id="inputText" rows="3" placeholder="Wpisz tekst z powtarzającymi się słowami...">the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.</textarea>
+                    <p class="hint">💡 Zmień tekst i naciśnij <strong>Reset</strong> lub kliknij poza pole</p>
+                </div>
+                <div>
+                    <label>🎯 Docelowa wielkość słownika: <span class="target-value" id="targetValue">30</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="targetSlider" min="10" max="100" value="30">
+                    </div>
+                    <div class="slider-labels">
+                        <span>Mniej tokenów</span>
+                        <span>Więcej tokenów</span>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-reset" id="resetBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                <path d="M21 3v5h-5"/>
+                                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                <path d="M3 21v-5h5"/>
+                            </svg>
+                            Reset
+                        </button>
+                        <button class="btn-auto" id="autoBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            <span id="autoText">Auto</span>
+                        </button>
+                        <button class="btn-step" id="stepBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                            Krok
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card blue">
+                    <div class="stat-label">Aktualny krok</div>
+                    <div class="stat-value" id="stepCount">0</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-label">Wielkość słownika</div>
+                    <div class="stat-value"><span id="vocabSize">0</span> / <span id="vocabTarget">30</span></div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-label">Liczba tokenów</div>
+                    <div class="stat-value" id="tokenCount">0</div>
+                </div>
+            </div>
+
+            <div id="bestPairAlert" class="alert yellow hidden">
+                <div class="alert-title">🎯 Najczęstsza para (wystąpienia: <span id="pairFrequency">0</span>):</div>
+                <div class="alert-content" id="pairDisplay"></div>
+            </div>
+
+            <div id="completedAlert" class="alert green hidden">
+                <div class="alert-title" style="text-align: center; font-size: 1.125rem;">
+                    ✅ Osiągnięto docelową wielkość słownika!
+                </div>
+            </div>
+
+            <div class="tokens-box">
+                <h3>Aktualne tokeny (żółte = będą połączone):</h3>
+                <div class="tokens-display" id="tokensDisplay"></div>
+            </div>
+
+            <div class="vocab-box">
+                <h3>📚 Słownik tokenów (<span id="totalVocabSize">0</span> tokenów):</h3>
+
+                <div class="vocab-section">
+                    <h4>
+                        <span class="badge blue">ALFABET</span>
+                        Podstawowe tokeny (pojedyncze znaki)
+                    </h4>
+                    <div class="vocab-tokens" id="alphabetTokens"></div>
+                </div>
+
+                <div class="vocab-section">
+                    <h4>
+                        <span class="badge purple">BPE</span>
+                        Tokeny utworzone przez algorytm (<span id="bpeCount">0</span> tokenów)
+                    </h4>
+                    <div id="bpeTokensContainer">
+                        <div class="empty-state">
+                            Naciśnij "Krok" lub "Auto" aby algorytm zaczął tworzyć nowe tokeny...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-box alphabet"></div>
+                        <span style="color: #4B5563;">Tokeny alfabetu</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box bpe"></div>
+                        <span style="color: #4B5563;">Tokeny BPE</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box new"></div>
+                        <span style="color: #4B5563;">Nowo utworzony</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <div id="historyBox" class="history-box hidden">
+            <h2>📊 Historia połączeń</h2>
+            <div class="history-list" id="historyList"></div>
+        </div>
+
+        <div class="note-box">
+            <h2>💡 Nota techniczna</h2>
+            <p>
+                W tej wizualizacji pominięto znacznik końca słowa (zazwyczaj oznaczany jako <code>&lt;/w&gt;</code>) dla przejrzystości.
+                W prawdziwym BPE każdy ostatni znak słowa jest oznaczony specjalnym symbolem, który pozwala algorytmowi odróżnić
+                np. token "er" na końcu słowa ("lower") od "er" w środku ("merry").
+            </p>
+            <p>
+                Dzięki temu BPE "wie", że nie powinien łączyć tokenów z różnych słów. W tej aplikacji używamy separatora <code>|</code> między słowami,
+                który pełni podobną rolę, ale jest ukryty w wyświetlaniu.
+            </p>
+        </div>
     </div>
-  );
-}
+
+    <script>
+        // Application State
+        const state = {
+            text: "the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.",
+            targetVocabSize: 30,
+            tokens: [],
+            vocabulary: new Set(),
+            step: 0,
+            mergeHistory: [],
+            isPlaying: false,
+            currentPairs: {},
+            bestPair: null,
+            autoPlayTimer: null
+        };
+
+        // DOM Elements
+        const elements = {
+            inputText: document.getElementById('inputText'),
+            targetSlider: document.getElementById('targetSlider'),
+            targetValue: document.getElementById('targetValue'),
+            resetBtn: document.getElementById('resetBtn'),
+            autoBtn: document.getElementById('autoBtn'),
+            stepBtn: document.getElementById('stepBtn'),
+            autoText: document.getElementById('autoText'),
+            stepCount: document.getElementById('stepCount'),
+            vocabSize: document.getElementById('vocabSize'),
+            vocabTarget: document.getElementById('vocabTarget'),
+            tokenCount: document.getElementById('tokenCount'),
+            bestPairAlert: document.getElementById('bestPairAlert'),
+            pairFrequency: document.getElementById('pairFrequency'),
+            pairDisplay: document.getElementById('pairDisplay'),
+            completedAlert: document.getElementById('completedAlert'),
+            tokensDisplay: document.getElementById('tokensDisplay'),
+            totalVocabSize: document.getElementById('totalVocabSize'),
+            alphabetTokens: document.getElementById('alphabetTokens'),
+            bpeTokensContainer: document.getElementById('bpeTokensContainer'),
+            bpeCount: document.getElementById('bpeCount'),
+            historyBox: document.getElementById('historyBox'),
+            historyList: document.getElementById('historyList')
+        };
+
+        // Initialize tokens from text
+        function initializeTokens() {
+            // Stop auto-play first
+            stopAutoPlay();
+
+            state.text = elements.inputText.value;
+            const words = state.text.toLowerCase().split(/\s+/).filter(w => w);
+
+            // Split each word into characters and add a separator between words
+            const initialTokens = [];
+            words.forEach((word, idx) => {
+                initialTokens.push(...word.split(''));
+                if (idx < words.length - 1) {
+                    initialTokens.push('|'); // Word boundary marker
+                }
+            });
+
+            state.tokens = initialTokens;
+            state.vocabulary = new Set(initialTokens);
+            state.step = 0;
+            state.mergeHistory = [];
+            state.bestPair = null;
+            state.currentPairs = {};
+
+            calculatePairFrequencies();
+            updateUI();
+        }
+
+        // Calculate pair frequencies
+        function calculatePairFrequencies() {
+            const pairs = {};
+            for (let i = 0; i < state.tokens.length - 1; i++) {
+                // Skip if either token is a word boundary
+                if (state.tokens[i] === '|' || state.tokens[i + 1] === '|') {
+                    continue;
+                }
+                const pair = state.tokens[i] + ' ' + state.tokens[i + 1];
+                pairs[pair] = (pairs[pair] || 0) + 1;
+            }
+
+            state.currentPairs = pairs;
+
+            // Find best pair
+            let maxCount = 0;
+            let best = null;
+            for (const [pair, count] of Object.entries(pairs)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    best = pair;
+                }
+            }
+            state.bestPair = best;
+            return best;
+        }
+
+        // Perform one merge step
+        function performMerge() {
+            if (!state.bestPair || state.vocabulary.size >= state.targetVocabSize) {
+                stopAutoPlay();
+                return;
+            }
+
+            const [token1, token2] = state.bestPair.split(' ');
+            const newToken = token1 + token2;
+
+            // Merge tokens
+            const newTokens = [];
+            let i = 0;
+            while (i < state.tokens.length) {
+                if (i < state.tokens.length - 1 && state.tokens[i] === token1 && state.tokens[i + 1] === token2) {
+                    newTokens.push(newToken);
+                    i += 2;
+                } else {
+                    newTokens.push(state.tokens[i]);
+                    i += 1;
+                }
+            }
+
+            state.tokens = newTokens;
+            state.vocabulary.add(newToken);
+            state.mergeHistory.push({
+                step: state.step + 1,
+                pair: state.bestPair,
+                newToken: newToken,
+                frequency: state.currentPairs[state.bestPair]
+            });
+            state.step++;
+
+            calculatePairFrequencies();
+            updateUI();
+
+            // Check if we should continue auto-play
+            if (state.isPlaying && state.vocabulary.size < state.targetVocabSize && state.bestPair) {
+                state.autoPlayTimer = setTimeout(performMerge, 1000);
+            } else {
+                stopAutoPlay();
+            }
+        }
+
+        // Start/stop auto-play
+        function toggleAutoPlay() {
+            if (state.isPlaying) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        }
+
+        function startAutoPlay() {
+            if (state.vocabulary.size >= state.targetVocabSize || !state.bestPair) {
+                return;
+            }
+            state.isPlaying = true;
+            elements.autoText.textContent = 'Zatrzymaj';
+            performMerge();
+        }
+
+        function stopAutoPlay() {
+            state.isPlaying = false;
+            elements.autoText.textContent = 'Auto';
+            if (state.autoPlayTimer) {
+                clearTimeout(state.autoPlayTimer);
+                state.autoPlayTimer = null;
+            }
+        }
+
+        // Render tokens with word boundaries
+        function renderTokens() {
+            const result = [];
+            let currentWord = [];
+
+            state.tokens.forEach((token, idx) => {
+                if (token === '|') {
+                    // End of word - add the word group
+                    if (currentWord.length > 0) {
+                        const wordGroup = document.createElement('div');
+                        wordGroup.className = 'word-group';
+                        currentWord.forEach(tokenSpan => wordGroup.appendChild(tokenSpan));
+                        result.push(wordGroup);
+                        currentWord = [];
+                    }
+                    return;
+                }
+
+                const isPartOfBestPair = state.bestPair && (
+                    (idx < state.tokens.length - 1 && state.tokens[idx] + ' ' + state.tokens[idx + 1] === state.bestPair) ||
+                    (idx > 0 && state.tokens[idx - 1] + ' ' + state.tokens[idx] === state.bestPair)
+                );
+
+                const span = document.createElement('span');
+                span.className = 'token' + (isPartOfBestPair ? ' highlight' : '');
+                span.textContent = token;
+                currentWord.push(span);
+            });
+
+            // Add last word if exists
+            if (currentWord.length > 0) {
+                const wordGroup = document.createElement('div');
+                wordGroup.className = 'word-group';
+                currentWord.forEach(tokenSpan => wordGroup.appendChild(tokenSpan));
+                result.push(wordGroup);
+            }
+
+            elements.tokensDisplay.innerHTML = '';
+            result.forEach(el => elements.tokensDisplay.appendChild(el));
+        }
+
+        // Render vocabulary
+        function renderVocabulary() {
+            // Alphabet tokens (single characters, excluding separator)
+            const alphabetVocab = Array.from(state.vocabulary)
+                .filter(t => t !== '|' && t.length === 1)
+                .sort();
+
+            elements.alphabetTokens.innerHTML = '';
+            alphabetVocab.forEach(token => {
+                const span = document.createElement('span');
+                span.className = 'vocab-token alphabet';
+                span.textContent = token;
+                elements.alphabetTokens.appendChild(span);
+            });
+
+            // BPE tokens (multi-character)
+            const bpeVocab = Array.from(state.vocabulary)
+                .filter(t => t !== '|' && t.length > 1)
+                .sort((a, b) => {
+                    if (a.length !== b.length) return b.length - a.length;
+                    return a.localeCompare(b);
+                });
+
+            elements.bpeCount.textContent = bpeVocab.length;
+
+            if (bpeVocab.length === 0) {
+                elements.bpeTokensContainer.innerHTML = '<div class="empty-state">Naciśnij "Krok" lub "Auto" aby algorytm zaczął tworzyć nowe tokeny...</div>';
+            } else {
+                const container = document.createElement('div');
+                container.className = 'vocab-tokens';
+
+                bpeVocab.forEach(token => {
+                    const isNew = state.mergeHistory.length > 0 &&
+                                  state.mergeHistory[state.mergeHistory.length - 1].newToken === token;
+
+                    const span = document.createElement('span');
+                    span.className = 'vocab-token bpe' + (isNew ? ' new' : '');
+                    span.innerHTML = `"${token}"<span class="length">(${token.length})</span>`;
+                    container.appendChild(span);
+                });
+
+                elements.bpeTokensContainer.innerHTML = '';
+                elements.bpeTokensContainer.appendChild(container);
+            }
+        }
+
+        // Render merge history
+        function renderHistory() {
+            if (state.mergeHistory.length === 0) {
+                elements.historyBox.classList.add('hidden');
+                return;
+            }
+
+            elements.historyBox.classList.remove('hidden');
+            elements.historyList.innerHTML = '';
+
+            state.mergeHistory.forEach(merge => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+
+                const [token1, token2] = merge.pair.split(' ');
+
+                item.innerHTML = `
+                    <div class="history-step">
+                        <span class="step-badge">${merge.step}</span>
+                    </div>
+                    <div class="history-merge">
+                        <span class="token-part">"${token1}"</span><span class="operator">+</span><span class="token-part">"${token2}"</span><span class="operator">→</span><span class="result">"${merge.newToken}"</span>
+                    </div>
+                    <div class="history-frequency">${merge.frequency}×</div>
+                `;
+
+                elements.historyList.appendChild(item);
+            });
+        }
+
+        // Update UI
+        function updateUI() {
+            // Update stats
+            elements.stepCount.textContent = state.step;
+            elements.vocabSize.textContent = state.vocabulary.size;
+            elements.tokenCount.textContent = state.tokens.length;
+            elements.totalVocabSize.textContent = state.vocabulary.size;
+
+            // Update best pair alert
+            if (state.bestPair && state.vocabulary.size < state.targetVocabSize) {
+                elements.bestPairAlert.classList.remove('hidden');
+                elements.pairFrequency.textContent = state.currentPairs[state.bestPair];
+                const [token1, token2] = state.bestPair.split(' ');
+                elements.pairDisplay.innerHTML = `"${token1}" + "${token2}" → "${token1 + token2}"`;
+            } else {
+                elements.bestPairAlert.classList.add('hidden');
+            }
+
+            // Update completed alert
+            if (state.vocabulary.size >= state.targetVocabSize) {
+                elements.completedAlert.classList.remove('hidden');
+            } else {
+                elements.completedAlert.classList.add('hidden');
+            }
+
+            // Update button states
+            const canPerformMerge = state.vocabulary.size < state.targetVocabSize && state.bestPair;
+            elements.stepBtn.disabled = !canPerformMerge;
+            elements.autoBtn.disabled = !canPerformMerge && !state.isPlaying;
+
+            // Render
+            renderTokens();
+            renderVocabulary();
+            renderHistory();
+        }
+
+        // Event Listeners
+        elements.inputText.addEventListener('blur', initializeTokens);
+
+        elements.targetSlider.addEventListener('input', (e) => {
+            state.targetVocabSize = parseInt(e.target.value);
+            elements.targetValue.textContent = state.targetVocabSize;
+            elements.vocabTarget.textContent = state.targetVocabSize;
+            updateUI();
+        });
+
+        elements.resetBtn.addEventListener('click', initializeTokens);
+        elements.autoBtn.addEventListener('click', toggleAutoPlay);
+        elements.stepBtn.addEventListener('click', performMerge);
+
+        // Initialize on load
+        initializeTokens();
+    </script>
+</body>
+</html>

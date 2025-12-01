@@ -53,11 +53,11 @@
         }
 
         .info-box {
-            background: #f8f8f8;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff8f8 100%);
             border-radius: 8px;
             padding: 1.5rem;
             margin-bottom: 2rem;
-            border: 1px solid #ececec;
+            border: 1px solid #e8e8f0;
         }
 
         .info-box h2 {
@@ -86,14 +86,14 @@
         .info-box li:before {
             content: counter(item);
             font-weight: 600;
-            color: #1a1a1a;
+            color: white;
             margin-right: 0.75rem;
             min-width: 1.25rem;
             height: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #e5e5e5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 4px;
             font-size: 0.75rem;
         }
@@ -252,8 +252,22 @@
         .stat-card {
             padding: 1.25rem;
             border-radius: 8px;
-            background: #fafafa;
-            border: 1px solid #ececec;
+            border: 1px solid;
+        }
+
+        .stat-card:nth-child(1) {
+            background: #f0f4ff;
+            border-color: #d4e0ff;
+        }
+
+        .stat-card:nth-child(2) {
+            background: #f0fdf6;
+            border-color: #d1f4e0;
+        }
+
+        .stat-card:nth-child(3) {
+            background: #faf5ff;
+            border-color: #ead5ff;
         }
 
         .stat-label {
@@ -276,8 +290,9 @@
             padding: 1rem 1.25rem;
             border-radius: 8px;
             margin-bottom: 2rem;
-            border: 1px solid #e0e0e0;
-            background: #fafafa;
+            border: 1px solid;
+            background: #fffbf0;
+            border-color: #ffe9b8;
         }
 
         .alert-title {
@@ -295,8 +310,8 @@
         }
 
         .alert.success {
-            background: #f0fdf4;
-            border-color: #86efac;
+            background: #f0fdf6;
+            border-color: #c6f0d8;
         }
 
         .alert.success .alert-title {
@@ -342,15 +357,18 @@
             font-size: 0.8rem;
             font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
             transition: all 0.15s;
-            background: #f5f5f5;
+            background: #f0f4ff;
             color: #1a1a1a;
             font-weight: 500;
+            border: 1px solid #e0e8ff;
         }
 
         .token.highlight {
-            background: #fef3c7;
-            color: #92400e;
+            background: #fff4ed;
+            color: #1a1a1a;
+            border-color: #ffc896;
             transform: scale(1.05);
+            box-shadow: 0 0 0 2px #fff4ed;
         }
 
         .vocab-box {
@@ -395,8 +413,16 @@
             font-size: 0.65rem;
             font-weight: 700;
             letter-spacing: 0.05em;
-            background: #1a1a1a;
+            background: #4a5568;
             color: white;
+        }
+
+        .vocab-section:nth-child(1) .badge {
+            background: #4169e1;
+        }
+
+        .vocab-section:nth-child(2) .badge {
+            background: #8b5cf6;
         }
 
         .vocab-tokens {
@@ -410,16 +436,34 @@
             border-radius: 6px;
             font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
             font-size: 0.8rem;
-            background: #f5f5f5;
+            background: #faf5ff;
             color: #1a1a1a;
             font-weight: 500;
-            border: 1px solid #e5e5e5;
+            border: 1px solid #ead5ff;
+        }
+
+        .vocab-token.alphabet {
+            background: #f0f4ff;
+            border-color: #d4e0ff;
         }
 
         .vocab-token.new {
-            background: #d1fae5;
-            border-color: #6ee7b7;
+            background: #e6f9f0;
+            border-color: #a7f3d0;
             font-weight: 600;
+            animation: newTokenPulse 0.5s ease-out;
+        }
+
+        @keyframes newTokenPulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
         .vocab-token .length {
@@ -464,13 +508,18 @@
         }
 
         .legend-box.alphabet {
-            background: #f5f5f5;
-            border: 1px solid #e5e5e5;
+            background: #f0f4ff;
+            border: 1px solid #d4e0ff;
+        }
+
+        .legend-box.bpe {
+            background: #faf5ff;
+            border: 1px solid #ead5ff;
         }
 
         .legend-box.new {
-            background: #d1fae5;
-            border: 1px solid #6ee7b7;
+            background: #e6f9f0;
+            border: 1px solid #a7f3d0;
         }
 
         .history-box {
@@ -518,7 +567,7 @@
             justify-content: center;
             width: 28px;
             height: 28px;
-            background: #1a1a1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 50%;
             font-weight: 600;
@@ -716,7 +765,11 @@
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-box alphabet"></div>
-                        <span>Base tokens</span>
+                        <span>Alphabet tokens</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box bpe"></div>
+                        <span>BPE tokens</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-box new"></div>

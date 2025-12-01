@@ -1,0 +1,441 @@
+import React, { useState, useEffect } from 'react';
+import { Play, RotateCcw, ChevronRight } from 'lucide-react';
+
+export default function BPETokenizer() {
+  const SAMPLE_TEXT = "the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.";
+  const TARGET_TOKENS = 30;
+  
+  const [text, setText] = useState(SAMPLE_TEXT);
+  const [targetVocabSize, setTargetVocabSize] = useState(TARGET_TOKENS);
+  const [tokens, setTokens] = useState([]);
+  const [vocabulary, setVocabulary] = useState(new Set());
+  const [step, setStep] = useState(0);
+  const [mergeHistory, setMergeHistory] = useState([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentPairs, setCurrentPairs] = useState({});
+  const [bestPair, setBestPair] = useState(null);
+
+  // Initialize tokens from text
+  const initializeTokens = () => {
+    // Stop auto-play first
+    setIsPlaying(false);
+    
+    const words = text.toLowerCase().split(/\s+/).filter(w => w);
+    // Split each word into characters and add a separator between words
+    const initialTokens = [];
+    words.forEach((word, idx) => {
+      initialTokens.push(...word.split(''));
+      if (idx < words.length - 1) {
+        initialTokens.push('|'); // Word boundary marker
+      }
+    });
+    
+    const vocab = new Set(initialTokens);
+    
+    setTokens(initialTokens);
+    setVocabulary(vocab);
+    setStep(0);
+    setMergeHistory([]);
+    setBestPair(null);
+    setCurrentPairs({});
+    
+    // Calculate pairs after state is set
+    setTimeout(() => {
+      calculatePairFrequencies(initialTokens);
+    }, 0);
+  };
+
+  useEffect(() => {
+    initializeTokens();
+  }, []);
+
+  // Calculate pair frequencies
+  const calculatePairFrequencies = (currentTokens) => {
+    const pairs = {};
+    for (let i = 0; i < currentTokens.length - 1; i++) {
+      // Skip if either token is a word boundary
+      if (currentTokens[i] === '|' || currentTokens[i + 1] === '|') {
+        continue;
+      }
+      const pair = currentTokens[i] + ' ' + currentTokens[i + 1];
+      pairs[pair] = (pairs[pair] || 0) + 1;
+    }
+    
+    setCurrentPairs(pairs);
+    
+    // Find best pair
+    let maxCount = 0;
+    let best = null;
+    for (const [pair, count] of Object.entries(pairs)) {
+      if (count > maxCount) {
+        maxCount = count;
+        best = pair;
+      }
+    }
+    setBestPair(best);
+    return best;
+  };
+
+  // Perform one merge step
+  const performMerge = () => {
+    if (!bestPair || vocabulary.size >= targetVocabSize) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const [token1, token2] = bestPair.split(' ');
+    const newToken = token1 + token2;
+    
+    // Merge tokens
+    const newTokens = [];
+    let i = 0;
+    while (i < tokens.length) {
+      if (i < tokens.length - 1 && tokens[i] === token1 && tokens[i + 1] === token2) {
+        newTokens.push(newToken);
+        i += 2;
+      } else {
+        newTokens.push(tokens[i]);
+        i += 1;
+      }
+    }
+
+    setTokens(newTokens);
+    setVocabulary(new Set([...vocabulary, newToken]));
+    setMergeHistory([...mergeHistory, { 
+      step: step + 1, 
+      pair: bestPair, 
+      newToken,
+      frequency: currentPairs[bestPair]
+    }]);
+    setStep(step + 1);
+    
+    calculatePairFrequencies(newTokens);
+  };
+
+  // Auto-play functionality
+  useEffect(() => {
+    if (isPlaying && vocabulary.size < targetVocabSize && bestPair) {
+      const timer = setTimeout(() => {
+        performMerge();
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (isPlaying) {
+      setIsPlaying(false);
+    }
+  }, [isPlaying, vocabulary.size, bestPair, tokens]);
+
+  // Render tokens with word boundaries
+  const renderTokens = () => {
+    const result = [];
+    let currentWord = [];
+    
+    tokens.forEach((token, idx) => {
+      if (token === '|') {
+        // End of word - add space
+        if (currentWord.length > 0) {
+          result.push(
+            <div key={`word-${idx}`} className="inline-flex items-center bg-white rounded-lg p-1 m-1 shadow-sm border border-gray-200">
+              {currentWord}
+            </div>
+          );
+          currentWord = [];
+        }
+        return;
+      }
+      
+      const isPartOfBestPair = bestPair && (
+        (idx < tokens.length - 1 && tokens[idx] + ' ' + tokens[idx + 1] === bestPair) ||
+        (idx > 0 && tokens[idx - 1] + ' ' + tokens[idx] === bestPair)
+      );
+      
+      currentWord.push(
+        <span
+          key={idx}
+          className={`inline-block px-1.5 py-0.5 m-0.5 rounded text-sm font-mono transition-all ${
+            isPartOfBestPair 
+              ? 'bg-yellow-300 border-2 border-yellow-500 scale-105' 
+              : 'bg-blue-100 border border-blue-300'
+          }`}
+        >
+          {token}
+        </span>
+      );
+    });
+    
+    // Add last word if exists
+    if (currentWord.length > 0) {
+      result.push(
+        <div key="word-last" className="inline-flex items-center bg-white rounded-lg p-1 m-1 shadow-sm border border-gray-200">
+          {currentWord}
+        </div>
+      );
+    }
+    
+    return result;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
+          <h1 className="text-4xl font-bold text-indigo-900 mb-2">
+            🔤 Byte Pair Encoding (BPE)
+          </h1>
+          <p className="text-gray-600 text-lg mb-6">
+            Wizualizacja algorytmu tokenizacji używanego w GPT i innych modelach językowych
+          </p>
+
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 mb-6 border border-indigo-200">
+            <h2 className="text-xl font-semibold text-indigo-900 mb-3">📚 Jak to działa?</h2>
+            <ol className="space-y-2 text-gray-700">
+              <li className="flex items-start">
+                <span className="font-bold text-indigo-600 mr-2">1.</span>
+                <span>Zaczynamy od pojedynczych znaków jako tokenów</span>
+              </li>
+              <li className="flex items-start">
+                <span className="font-bold text-indigo-600 mr-2">2.</span>
+                <span>Znajdujemy najczęściej występującą parę sąsiednich tokenów</span>
+              </li>
+              <li className="flex items-start">
+                <span className="font-bold text-indigo-600 mr-2">3.</span>
+                <span>Łączymy tę parę w nowy token</span>
+              </li>
+              <li className="flex items-start">
+                <span className="font-bold text-indigo-600 mr-2">4.</span>
+                <span>Powtarzamy proces aż osiągniemy docelową wielkość słownika</span>
+              </li>
+            </ol>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                📝 Twój tekst do tokenizacji:
+              </label>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onBlur={initializeTokens}
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm bg-white"
+                rows="3"
+                placeholder="Wpisz tekst z powtarzającymi się słowami..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Zmień tekst i naciśnij <strong>Reset</strong> lub kliknij poza pole
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🎯 Docelowa wielkość słownika: <span className="text-indigo-600 font-bold">{targetVocabSize}</span>
+              </label>
+              <input
+                type="range"
+                min="10"
+                max="100"
+                value={targetVocabSize}
+                onChange={(e) => setTargetVocabSize(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mb-4">
+                <span>Mniej tokenów</span>
+                <span>Więcej tokenów</span>
+              </div>
+              <div className="flex justify-between mt-4 gap-2">
+                <button
+                  onClick={initializeTokens}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold"
+                >
+                  <RotateCcw size={20} />
+                  Reset
+                </button>
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  disabled={vocabulary.size >= targetVocabSize || !bestPair}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold"
+                >
+                  <Play size={20} />
+                  {isPlaying ? 'Zatrzymaj' : 'Auto'}
+                </button>
+                <button
+                  onClick={performMerge}
+                  disabled={vocabulary.size >= targetVocabSize || !bestPair}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold"
+                >
+                  <ChevronRight size={20} />
+                  Krok
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="text-sm text-blue-600 font-medium">Aktualny krok</div>
+              <div className="text-3xl font-bold text-blue-900">{step}</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <div className="text-sm text-green-600 font-medium">Wielkość słownika</div>
+              <div className="text-3xl font-bold text-green-900">{vocabulary.size} / {targetVocabSize}</div>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+              <div className="text-sm text-purple-600 font-medium">Liczba tokenów</div>
+              <div className="text-3xl font-bold text-purple-900">{tokens.length}</div>
+            </div>
+          </div>
+
+          {bestPair && vocabulary.size < targetVocabSize && (
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-6">
+              <div className="font-semibold text-yellow-900 mb-2">
+                🎯 Najczęstsza para (wystąpienia: {currentPairs[bestPair]}):
+              </div>
+              <div className="text-2xl font-mono font-bold text-yellow-800">
+                "{bestPair.split(' ')[0]}" + "{bestPair.split(' ')[1]}" → "{bestPair.replace(' ', '')}"
+              </div>
+            </div>
+          )}
+
+          {vocabulary.size >= targetVocabSize && (
+            <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4 mb-6">
+              <div className="font-semibold text-green-900 text-center text-lg">
+                ✅ Osiągnięto docelową wielkość słownika!
+              </div>
+            </div>
+          )}
+
+          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Aktualne tokeny (żółte = będą połączone):
+            </h3>
+            <div className="flex flex-wrap">
+              {renderTokens()}
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border border-purple-200">
+            <h3 className="text-lg font-semibold text-purple-900 mb-4">
+              📚 Słownik tokenów ({vocabulary.size} tokenów):
+            </h3>
+            
+            {/* Alphabet tokens */}
+            <div className="mb-6">
+              <h4 className="text-md font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">ALFABET</span>
+                Podstawowe tokeny (pojedyncze znaki)
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {Array.from(vocabulary)
+                  .filter(t => t !== '|' && t.length === 1)
+                  .sort()
+                  .map((token, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1.5 rounded-lg font-mono text-sm bg-blue-100 border border-blue-300"
+                    >
+                      {token}
+                    </span>
+                  ))}
+              </div>
+            </div>
+
+            {/* BPE-created tokens */}
+            <div>
+              <h4 className="text-md font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                <span className="bg-purple-600 text-white px-2 py-0.5 rounded text-xs">BPE</span>
+                Tokeny utworzone przez algorytm ({Array.from(vocabulary).filter(t => t !== '|' && t.length > 1).length} tokenów)
+              </h4>
+              {Array.from(vocabulary).filter(t => t !== '|' && t.length > 1).length === 0 ? (
+                <div className="text-gray-500 italic text-sm bg-white rounded-lg p-4 border border-gray-200">
+                  Naciśnij "Krok" lub "Auto" aby algorytm zaczął tworzyć nowe tokeny...
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(vocabulary)
+                    .filter(t => t !== '|' && t.length > 1)
+                    .sort((a, b) => {
+                      // Sort by length (longer tokens first), then alphabetically
+                      if (a.length !== b.length) return b.length - a.length;
+                      return a.localeCompare(b);
+                    })
+                    .map((token, idx) => {
+                      const isNew = mergeHistory.length > 0 && 
+                                    mergeHistory[mergeHistory.length - 1].newToken === token;
+                      return (
+                        <span
+                          key={idx}
+                          className={`px-3 py-1.5 rounded-lg font-mono text-sm transition-all ${
+                            isNew
+                              ? 'bg-green-200 border-2 border-green-500 font-bold scale-110 shadow-lg'
+                              : 'bg-purple-100 border border-purple-300 font-semibold'
+                          }`}
+                        >
+                          "{token}"
+                          <span className="ml-1 text-xs text-gray-500">({token.length})</span>
+                        </span>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-purple-300 flex gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></span>
+                <span className="text-gray-600">Tokeny alfabetu</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></span>
+                <span className="text-gray-600">Tokeny BPE</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 bg-green-200 border-2 border-green-500 rounded"></span>
+                <span className="text-gray-600">Nowo utworzony</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {mergeHistory.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
+            <h2 className="text-2xl font-bold text-indigo-900 mb-4">📊 Historia połączeń</h2>
+            <div className="space-y-2">
+              {mergeHistory.map((merge, idx) => (
+                <div key={idx} className="flex items-center gap-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <div className="flex-shrink-0 w-16 text-center">
+                    <span className="inline-block bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                      {merge.step}
+                    </span>
+                  </div>
+                  <div className="flex-1 font-mono text-sm">
+                    <span className="text-gray-600">"{merge.pair.split(' ')[0]}"</span>
+                    <span className="text-indigo-600 mx-2">+</span>
+                    <span className="text-gray-600">"{merge.pair.split(' ')[1]}"</span>
+                    <span className="text-indigo-600 mx-2">→</span>
+                    <span className="text-indigo-900 font-bold">"{merge.newToken}"</span>
+                  </div>
+                  <div className="flex-shrink-0 bg-purple-100 px-3 py-1 rounded-full text-purple-800 font-semibold text-sm">
+                    {merge.frequency}×
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <h2 className="text-2xl font-bold text-indigo-900 mb-4">💡 Nota techniczna</h2>
+          <div className="prose prose-indigo max-w-none">
+            <p className="text-gray-700 leading-relaxed mb-4">
+              W tej wizualizacji pominięto znacznik końca słowa (zazwyczaj oznaczany jako <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-indigo-600">&lt;/w&gt;</code>) dla przejrzystości. 
+              W prawdziwym BPE każdy ostatni znak słowa jest oznaczony specjalnym symbolem, który pozwala algorytmowi odróżnić 
+              np. token "er" na końcu słowa ("lower") od "er" w środku ("merry").
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              Dzięki temu BPE "wie", że nie powinien łączyć tokenów z różnych słów. W tej aplikacji używamy separatora <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-indigo-600">|</code> między słowami, 
+              który pełni podobną rolę, ale jest ukryty w wyświetlaniu.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -3,921 +3,951 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Byte Pair Encoding Visualizer</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=202611101613">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=202611101613">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png?v=202611101613">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=202611101613">
+    <meta name="theme-color" content="#FFD500">
+    <title>Byte Pair Encoding – wizualizacja</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap">
+
+    <!-- Boot gate: the token views are rendered by script, so hide the page until fonts are ready -->
+    <style>
+        @keyframes boot-reveal { to { visibility: visible; } }
+        html:not(.app-ready) body { visibility: hidden; animation: boot-reveal 0s 4s forwards; }
+        @media print { html:not(.app-ready) body { visibility: visible; animation: none; } }
+    </style>
+    <noscript><style>html:not(.app-ready) body { visibility: visible; animation: none; }</style></noscript>
+
+    <style>
+/* ============================================================
+   edulab - Colors & Type foundation
+   Fonts (Outfit, IBM Plex Sans, Roboto Mono) load from Google Fonts
+   via the <link> tags in tokens/head.html - paste that into <head>.
+   No @import here: it chains requests and blocks rendering.
+   ============================================================ */
+
+:root {
+  /* ---- Brand fonts ---- */
+  --font-display: 'Outfit', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-sans:    'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono:    'Roboto Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ============================================================
+     RAW COLOR TOKENS
+     ============================================================ */
+
+  /* Paper - page background is white; the stone steps are bands / wells.
+     Warm neutral grey (no yellow cast) so yellow and the colour blocks stay the
+     loudest thing on the page. Stone v2 (2026-10-10) replaced the cream sand
+     (#FBF7E6 / #F5EDCB), which at 1.07:1 on white did not read as a surface. */
+  --paper:    #FFFFFF;   /* page background (white)                       */
+  --paper-2:  #F5F3F0;   /* stone band: alternating sections, card heads   */
+  --paper-3:  #EAE6E0;   /* deepest stone: wells, table heads, bar tracks  */
+  --surface:  #FFFFFF;   /* cards & sheets                                */
+
+  /* Ink - warm near-black text & lines */
+  --ink:      #1C1917;   /* primary text                                    */
+  --ink-2:    #44403C;   /* secondary text, 10.3:1 on white                 */
+  --ink-3:    #625B53;   /* muted / placeholder: >= 4.5:1 on every paper step */
+  --line:     #E0DBD3;   /* hairline: dividers, table rows, card heads      */
+  --line-2:   #C9C2B7;   /* stronger: card contours, section rules          */
+  --line-strong: #857C69;/* control boundaries (inputs, ghost buttons,
+                            answer options): >= 3:1 on paper steps (WCAG 1.4.11) */
+
+  /* ---- Brand: Yellow main · Blue + Green secondary · Red danger ----
+     Plain saturated colours. The base colour (--blue) is for large fills,
+     illustrations and large text (>= 24px, or 19px bold). "-soft" is the
+     solid fill for chips and panels that carry small text: it is the
+     AA shade (= "-600"), so its "-ink" (white; dark ink on yellow) reaches
+     4.5:1. A colour used AS text goes only on white and uses "-600".
+     Never colour-on-colour (no green text on green).
+     Gate: python3 scripts/check-contrast.py */
+
+  /* Yellow - primary (buttons, progress, values on dark panels) */
+  --yellow:      #FFD500;
+  --yellow-600:  #F0C800;  /* hover / press          */
+  --yellow-soft: #FFD500;  /* chip / panel fill      */
+  --yellow-ink:  #1C1917;  /* text on yellow         */
+
+  /* Blue - secondary (panels, chips, correct / selected state) */
+  --blue:      #1E8FC2;
+  --blue-600:  #177AA8;
+  --blue-soft: #177AA8;   /* = blue-600, white text 4.8:1 */
+  --blue-ink:  #FFFFFF;
+
+  /* Green - secondary support (chips, success) */
+  --green:      #00A651;
+  --green-600:  #078342;  /* hover / press, AA text shade */
+  --green-soft: #078342;  /* = green-600, white text 4.9:1 */
+  --green-ink:  #FFFFFF;
+
+  /* Red - danger / important / wrong (use sparingly) */
+  --red:      #E5322D;
+  --red-600:  #C92823;
+  --red-soft: #C92823;   /* = red-600, white text 5.5:1 */
+  --red-ink:  #FFFFFF;
+
+  /* Grape - 5th category tone (colour-coded groups), from the play palette */
+  --grape:      #7A5AC2;
+  --grape-soft: #7A5AC2;  /* white text 5.2:1 */
+  --grape-ink:  #FFFFFF;
+
+  /* Legacy role aliases - older edulab apps use these names */
+  --marigold: var(--yellow); --marigold-600: var(--yellow-600); --marigold-soft: var(--yellow-soft); --marigold-ink: var(--yellow-ink);
+  --teal:     var(--blue);   --teal-600:     var(--blue-600);   --teal-soft:     var(--blue-soft);   --teal-ink:     var(--blue-ink);
+  --sky:      var(--green);                                     --sky-soft:      var(--green-soft);  --sky-ink:      var(--green-ink);
+  --coral:    var(--red);    --coral-600:    var(--red-600);    --coral-soft:    var(--red-soft);    --coral-ink:    var(--red-ink);
+
+  /* Play palette - subject/category colours in the kids app */
+  --play-sun:    #FFD500;
+  --play-grass:  #00A651;
+  --play-berry:  #C6478B;
+  --play-grape:  #7A5AC2;
+  --play-sky:    #1E8FC2;
+  --play-coral:  #E5322D;
+
+  /* ---- Semantic ---- */
+  --success:      #00A651;  --success-soft: #078342;  --success-ink: #FFFFFF;
+  --warning:      #FFD500;  --warning-soft: #FFD500;  --warning-ink: #1C1917;
+  --danger:       #E5322D;  --danger-soft:  #C92823;  --danger-ink:  #FFFFFF;
+  --info:         #1E8FC2;  --info-soft:    #177AA8;  --info-ink:    #FFFFFF;
+
+  /* ---- Functional aliases ---- */
+  --bg:        var(--paper);
+  --fg:        var(--ink);
+  --fg-muted:  var(--ink-2);
+  --primary:   var(--yellow);
+  --on-primary:#1C1917;      /* dark text on yellow */
+  /* White gap + ink band: >= 3:1 on paper, sand, yellow and every chip fill.
+     Pair with `outline: 3px solid transparent` so forced-colours mode still shows focus. */
+  --focus-ring: 0 0 0 2px var(--paper), 0 0 0 5px var(--ink);
+  /* Range-slider track */
+  --track: color-mix(in srgb, var(--ink) 24%, transparent);
+
+  /* ============================================================
+     SPACING  (4pt base)
+     ============================================================ */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+  --sp-12: 48px; --sp-16: 64px; --sp-20: 80px; --sp-24: 96px;
+
+  /* ---- Radii (friendly, generous) ---- */
+  /* Page gutter (user decision 2026-11-07): content ~70% of the viewport on wide screens
+     (15% margin each side from ~1280px), never squeezed below 900px, 16-72px on phones/tablets.
+     Every full-width band, header row, page head and footer pads its content with it. */
+  --gutter: max(clamp(16px, 4vw, 72px), min(15vw, calc((100vw - 900px) / 2)));
+  --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
+
+  /* ---- Elevation - warm, low, soft ---- */
+  --shadow-sm: 0 1px 2px rgba(33,30,26,.10), 0 2px 6px rgba(33,30,26,.06);
+  --shadow-md: 0 6px 18px rgba(33,30,26,.12), 0 1px 3px rgba(33,30,26,.08);
+  --shadow-lg: 0 16px 40px rgba(33,30,26,.12), 0 3px 8px rgba(33,30,26,.06);
+  --shadow-primary:  0 8px 22px color-mix(in srgb, var(--yellow) 30%, transparent);
+  --shadow-marigold: var(--shadow-primary);   /* legacy alias */
+
+  /* ============================================================
+     TYPE SCALE (semantic sizes)
+     ============================================================ */
+  --display-font:  clamp(48px, 6vw, 72px);
+  --h1: 44px; --h2: 33px; --h3: 25px; --h4: 19px;
+  --body-lg: 18px; --body: 16px; --body-sm: 14px;
+  --caption: 13px; --overline: 12px;
+}
+
+/* ============================================================
+   SEMANTIC ELEMENT STYLES
+   Apply via element selectors or .edu-prose wrapper.
+   Element defaults are wrapped in :where(.edu) (zero specificity) so any
+   single class wins: <p class="edu-overline">, <p class="edu-small">,
+   <h1 class="app-title"> keep their own font/size instead of the element default.
+   ============================================================ */
+
+.edu-display, :where(.edu) h1.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--display-font);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+:where(.edu) h1, .edu-h1 {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: var(--h1);
+  line-height: 1.06; letter-spacing: -0.02em; color: var(--ink);
+}
+:where(.edu) h2, .edu-h2 {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: var(--h2);
+  line-height: 1.12; letter-spacing: -0.015em; color: var(--ink);
+}
+:where(.edu) h3, .edu-h3 {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: var(--h3);
+  line-height: 1.2; letter-spacing: -0.01em; color: var(--ink);
+}
+:where(.edu) h4, .edu-h4 {
+  font-family: var(--font-sans);
+  font-weight: 700; font-size: var(--h4);
+  line-height: 1.3; color: var(--ink);
+}
+:where(.edu) p, .edu-p, .edu-body {
+  font-family: var(--font-sans);
+  font-weight: 400; font-size: var(--body);
+  line-height: 1.6; color: var(--ink-2);
+}
+.edu-body-lg { font-family: var(--font-sans); font-size: var(--body-lg); line-height: 1.6; color: var(--ink-2); }
+.edu-small  { font-family: var(--font-sans); font-size: var(--body-sm); line-height: 1.5; color: var(--ink-2); }
+.edu-caption{ font-family: var(--font-sans); font-size: var(--caption); line-height: 1.45; color: var(--ink-3); }
+
+/* Overline - mono, tracked; functional labels only (never above page/section titles) */
+.edu-overline {
+  font-family: var(--font-mono);
+  font-weight: 500; font-size: var(--overline);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink);
+}
+:where(.edu) code, .edu-mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em; color: var(--ink);
+  background: var(--paper-3); padding: 0.12em 0.4em; border-radius: var(--r-xs);
+}
+
+/* Solid colour blocks (callouts, stat cards, chips): set background: var(--X-soft) and
+   color: var(--X-ink) on the block, add .edu-block, and every heading/paragraph inside
+   inherits that text colour instead of the default ink. */
+.edu-block, .edu-block h1, .edu-block h2, .edu-block h3, .edu-block h4, .edu-block p,
+.edu-block li, .edu-block small { color: inherit; }
+
+body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-sans); }
+    </style>
+
     <style>
         /* ============================================================
-           edulab — Colors & Type foundation (design tokens)
+           App styles - everything below reads the edulab tokens above
            ============================================================ */
-        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            /* Brand fonts */
-            --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
-            --font-sans:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
-            --font-mono:    'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+        body { min-height: 100vh; line-height: 1.6; }
 
-            /* Paper — warm cream (never pure white) */
-            --paper:    #FBF7F0;
-            --paper-2:  #F4EDDF;
-            --paper-3:  #ECE1CF;
-            --surface:  #FFFFFF;
+        :focus-visible { outline: 3px solid transparent; outline-offset: 2px; box-shadow: var(--focus-ring); }
 
-            /* Ink */
-            --ink:      #211E1A;
-            --ink-2:    #5B554D;
-            --ink-3:    #938A7C;
-            --line:     #E7DCCB;
-            --line-2:   #D6C8B2;
+        .hidden { display: none !important; }
+        svg { flex-shrink: 0; }
 
-            /* Marigold — primary brand */
-            --marigold:      #E8920C;
-            --marigold-600:  #CE800A;
-            --marigold-soft: #FBE7C2;
-            --marigold-ink:  #8A4F00;
+        /* ---------- Branded top menu (sticky: it carries the language switch) ---------- */
+        .edu-header { position: sticky; top: 0; z-index: 50; width: 100%; background: var(--paper); border-bottom: 1px solid var(--line-2); }
+        .edu-header-inner { padding: 8px var(--gutter); display: flex; align-items: center; gap: 12px; }
+        .edu-logo { width: 64px; height: 64px; display: block; margin-right: -6px; }
+        .edu-wordmark { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; color: var(--ink); }
+        .edu-seg { margin-left: auto; display: inline-flex; gap: 2px; padding: 3px; background: var(--paper-2); border-radius: var(--r-pill); }
+        .edu-seg button {
+            border: none; background: transparent; padding: 7px 14px; border-radius: var(--r-pill);
+            font-family: var(--font-sans); font-size: var(--body-sm); font-weight: 600; color: var(--ink-2); cursor: pointer;
+            transition: background-color .15s, color .15s;
+        }
+        .edu-seg button.active { background: var(--yellow); color: var(--yellow-ink); }
 
-            /* Teal — secondary brand */
-            --teal:      #0E8C7F;
-            --teal-600:  #0B7468;
-            --teal-soft: #D2EBE6;
-            --teal-ink:  #0A5A52;
+        /* ---------- Page header ---------- */
+        .page-head { padding: 44px var(--gutter) 52px; text-align: left; }
+        .app-title {
+            font-family: var(--font-display); font-weight: 800;
+            font-size: clamp(2.3rem, 5vw, 3.3rem); letter-spacing: -.025em;
+            line-height: 1.05; color: var(--ink); margin: 0 0 14px;
+        }
+        .edu-lead { font-size: 1.15rem; line-height: 1.6; color: var(--ink-2); margin: 0; }
 
-            /* Coral — accent (sparingly) */
-            --coral:      #EF5B3F;
-            --coral-600:  #D44A30;
-            --coral-soft: #FBDDD4;
-            --coral-ink:  #9A2E1B;
+        /* ---------- Section bands ---------- */
+        .sec { margin: 0; padding: 52px 0 60px; border-top: 1px solid var(--line); }
+        .sec:nth-of-type(odd) { background: var(--paper-2); }
+        .sec > .wrap { padding: 0 var(--gutter); }
+        .sec-head { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+        .sec-head h2 { margin: 0; }
+        .sec-head::after { content: ""; flex: 1; height: 1px; background: var(--line-2); }
 
-            /* Sky — supportive */
-            --sky:      #2E78C9;
-            --sky-soft: #D9E7F6;
-            --sky-ink:  #1B4E88;
+        /* ---------- Tones & icon badges ---------- */
+        .tone-grape  { background: var(--grape-soft);  color: var(--grape-ink); }
+        .tone-blue   { background: var(--blue-soft);   color: var(--blue-ink); }
+        .tone-yellow { background: var(--yellow-soft); color: var(--yellow-ink); }
+        .tone-green  { background: var(--green-soft);  color: var(--green-ink); }
+        .tone-ink    { background: var(--ink);         color: var(--paper); }
+        .tone-stone  { background: var(--paper-3);     color: var(--ink); }
+        .ic { width: 18px; height: 18px; flex: none; }
+        .badge { flex: none; width: 34px; height: 34px; border-radius: var(--r-sm); display: inline-grid; place-items: center; }
+        .badge-lg { width: 46px; height: 46px; border-radius: var(--r-md); }
+        .badge-lg .ic { width: 24px; height: 24px; }
+        .badge.tone-ink { color: var(--yellow); }
+        .tile-h { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .tile-h h3 { margin: 0; font-size: 18px; line-height: 1.3; }
 
-            /* Semantic */
-            --success:      #2F8F5B;  --success-soft: #D7EEDD;  --success-ink: #1C6A3E;
-
-            --focus-ring: 0 0 0 3px rgba(232,146,12,.38);
-
-            /* Radii */
-            --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
-
-            /* Elevation — warm, low, soft */
-            --shadow-sm: 0 1px 2px rgba(33,30,26,.06), 0 1px 1px rgba(33,30,26,.04);
-            --shadow-md: 0 4px 16px rgba(33,30,26,.08), 0 1px 3px rgba(33,30,26,.05);
-            --shadow-lg: 0 16px 40px rgba(33,30,26,.12), 0 3px 8px rgba(33,30,26,.06);
-            --shadow-marigold: 0 8px 22px rgba(232,146,12,.28);
+        .edu-chip {
+            font-family: var(--font-mono); font-size: 11px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: .08em; padding: 4px 10px; border-radius: var(--r-pill);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-sans);
-            background: var(--paper);
-            min-height: 100vh;
-            color: var(--ink);
-            line-height: 1.6;
-        }
-
-        /* ---------- Branded top menu (shared chrome) ---------- */
-        .edu-header {
-            position: sticky; top: 0; z-index: 50; width: 100%;
-            background: rgba(251, 247, 240, 0.85);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--line);
-        }
-        .edu-header-inner {
-            max-width: 1100px; margin: 0 auto;
-            padding: 15px 30px; display: flex; align-items: center; gap: 12px;
-        }
-        .edu-logo { width: 32px; height: 32px; display: block; }
-        .edu-wordmark {
-            font-family: var(--font-display); font-weight: 700;
-            font-size: 22px; letter-spacing: -.02em; color: var(--ink);
-        }
-        .edu-tag {
-            font-family: var(--font-mono); font-weight: 500; font-size: 11px;
-            letter-spacing: .14em; text-transform: uppercase; color: var(--teal-ink);
-            background: var(--teal-soft); padding: 4px 9px; border-radius: var(--r-pill);
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 44px 30px 80px;
-        }
-
-        /* ---------- Page header (eyebrow → title → lead) ---------- */
-        .header {
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-
-        .edu-overline {
-            font-family: var(--font-mono);
-            font-weight: 500; font-size: 12px;
-            letter-spacing: 0.14em; text-transform: uppercase;
-            color: var(--marigold-ink);
-            margin-bottom: 0.85rem;
-        }
-
-        h1 {
-            font-family: var(--font-display);
-            font-size: clamp(2rem, 4.5vw, 2.85rem);
-            font-weight: 800;
-            color: var(--ink);
-            margin-bottom: 0.6rem;
-            letter-spacing: -0.025em;
-            line-height: 1.05;
-        }
-
-        .subtitle {
-            color: var(--ink-2);
-            font-size: 1.0625rem;
-            font-weight: 400;
-            max-width: 36rem;
-            margin: 0 auto;
-        }
-
+        /* ---------- Card anatomy ---------- */
         .card {
-            background: var(--surface);
-            border-radius: var(--r-xl);
-            border: 1px solid var(--line);
-            box-shadow: var(--shadow-sm);
-            padding: 2rem;
-            margin-bottom: 1.5rem;
+            background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--r-lg);
+            box-shadow: var(--shadow-sm); overflow: hidden; display: flex; flex-direction: column;
+        }
+        .card-head {
+            padding: 14px 22px; background: var(--paper-2); border-bottom: 1px solid var(--line);
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        }
+        .card-body { padding: 20px 22px; flex: 1; }
+        .card-foot {
+            padding: 14px 22px; border-top: 1px dashed var(--line-2);
+            display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+        }
+        .count { font-family: var(--font-mono); font-size: var(--caption); color: var(--ink-2); white-space: nowrap; }
+
+        /* ---------- "Why tokens" tiles ---------- */
+        .tiles3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 20px; }
+
+        /* ---------- "How it works" chain ---------- */
+        .chain { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+        .link {
+            position: relative; display: flex; align-items: flex-start; gap: 12px;
+            background: var(--surface); color: var(--ink); border: 1px solid var(--line-2);
+            border-radius: var(--r-md); padding: 16px 18px; font-size: var(--body); line-height: 1.45;
+        }
+        .link:not(:last-child)::after {
+            content: "→"; position: absolute; left: 100%; top: 50%; width: 32px; text-align: center;
+            transform: translateY(-50%); font-family: var(--font-mono); font-weight: 500; color: var(--ink-2);
+        }
+        .link-num {
+            flex: none; width: 28px; height: 28px; border-radius: var(--r-xs); display: inline-grid; place-items: center;
+            font-family: var(--font-mono); font-weight: 500; font-size: var(--caption);
         }
 
-        /* ---------- "How it works" — teal-soft panel ---------- */
-        .info-box {
-            background: var(--teal-soft);
-            border-radius: var(--r-xl);
-            padding: 1.6rem 1.75rem;
-            margin-bottom: 2rem;
+        /* ---------- Controls ---------- */
+        .stack { display: grid; gap: 20px; }
+        .controls-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+        .field-label {
+            display: block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 12px;
+            font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--ink);
         }
-
-        .info-box h2 {
-            font-family: var(--font-display);
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--teal-ink);
-            margin-bottom: 1rem;
-            letter-spacing: -0.01em;
-            text-transform: none;
+        .target-value { font-weight: 700; }
+        textarea, .input {
+            width: 100%; padding: 11px 14px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+            font-family: var(--font-mono); font-size: var(--body-sm); line-height: 1.55;
+            background: var(--surface); color: var(--ink);
         }
-
-        .info-box ol {
-            list-style: none;
-            counter-reset: item;
-        }
-
-        .info-box li {
-            counter-increment: item;
-            margin-bottom: 0.55rem;
-            color: var(--teal-ink);
-            display: flex;
-            align-items: start;
-            font-size: 0.95rem;
-        }
-
-        .info-box li:before {
-            content: counter(item);
-            font-family: var(--font-mono);
-            font-weight: 500;
-            color: #fff;
-            margin-right: 0.75rem;
-            min-width: 1.35rem;
-            height: 1.35rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--teal);
-            border-radius: var(--r-xs);
-            font-size: 0.75rem;
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (min-width: 768px) {
-            .controls-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        label {
-            display: block;
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 500;
-            color: var(--ink-2);
-            margin-bottom: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .target-value {
-            color: var(--marigold-ink);
-            font-weight: 500;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 0.875rem;
-            border: 1px solid var(--line);
-            border-radius: var(--r-sm);
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            background: var(--surface);
-            color: var(--ink);
-            resize: vertical;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--marigold);
-            box-shadow: var(--focus-ring);
-        }
-
-        .hint {
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--ink-3);
-            margin-top: 0.5rem;
-            font-weight: 400;
-        }
-
-        .slider-container {
-            margin-bottom: 0.75rem;
-        }
+        textarea { resize: vertical; }
+        textarea::placeholder, .input::placeholder { color: var(--ink-3); }
+        .hint { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: var(--ink-3); margin-top: 8px; }
 
         input[type="range"] {
-            width: 100%;
-            height: 8px;
-            background: rgba(33,30,26,.12);
-            border-radius: var(--r-pill);
-            outline: none;
-            -webkit-appearance: none;
+            width: 100%; height: 8px; background: var(--track); border-radius: var(--r-pill);
+            -webkit-appearance: none; appearance: none; display: block; margin: 10px 0;
         }
-
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: var(--surface);
-            cursor: pointer;
-            border-radius: 50%;
-            border: 2px solid var(--ink);
-            box-shadow: var(--shadow-sm);
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: var(--surface);
+            cursor: pointer; border-radius: 50%; border: 2px solid var(--ink); box-shadow: var(--shadow-sm);
         }
-
         input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: var(--surface);
-            cursor: pointer;
-            border-radius: 50%;
-            border: 2px solid var(--ink);
-            box-shadow: var(--shadow-sm);
+            width: 20px; height: 20px; background: var(--surface); cursor: pointer;
+            border-radius: 50%; border: 2px solid var(--ink); box-shadow: var(--shadow-sm);
         }
-
         .slider-labels {
-            display: flex;
-            justify-content: space-between;
-            font-family: var(--font-mono);
-            font-size: 0.68rem;
-            color: var(--ink-3);
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            display: flex; justify-content: space-between; margin-bottom: 18px;
+            font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);
+            text-transform: uppercase; letter-spacing: .08em;
         }
 
-        .button-group {
-            display: flex;
-            gap: 0.75rem;
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn {
+            flex: 1 1 0; min-width: 104px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px 20px; border-radius: var(--r-pill); border: 1px solid var(--line-strong);
+            font-family: var(--font-display); font-weight: 600; font-size: 15px; cursor: pointer;
+            background: transparent; color: var(--ink);
+            transition: background-color .15s, color .15s, border-color .15s;
         }
+        .btn:hover:not(:disabled) { background: var(--paper-2); }
+        .btn-primary { background: var(--yellow); color: var(--on-primary); border-color: var(--yellow); }
+        .btn-primary:hover:not(:disabled) { background: var(--yellow-600); border-color: var(--yellow-600); }
+        .btn.active, .btn.active:hover:not(:disabled) { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+        .btn:disabled { background: var(--paper-2); color: var(--ink-3); border-color: var(--line-2); cursor: not-allowed; }
 
-        button {
-            flex: 1;
-            padding: 0.75rem 1.25rem;
-            border: 1px solid var(--line);
-            border-radius: var(--r-sm);
-            font-family: var(--font-display);
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: background-color 0.18s, color 0.18s, border-color 0.18s;
-            font-size: 0.875rem;
-            background: var(--surface);
-            color: var(--ink);
-        }
-
-        button:hover:not(:disabled) {
-            background: var(--marigold-soft);
-            color: var(--marigold-ink);
-            border-color: var(--marigold);
-        }
-
-        button:disabled {
-            background: var(--paper-2);
-            color: var(--ink-3);
-            cursor: not-allowed;
-            border-color: var(--line);
-        }
-
-        button.active {
-            background: var(--marigold);
-            color: #fff;
-            border-color: var(--marigold);
-            box-shadow: var(--shadow-marigold);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (min-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        .stat-card {
-            padding: 1.3rem 1.4rem;
-            border-radius: var(--r-lg);
-        }
-
-        .stat-card:nth-child(1) {
-            background: var(--sky-soft);
-        }
-
-        .stat-card:nth-child(2) {
-            background: var(--teal-soft);
-        }
-
-        .stat-card:nth-child(3) {
-            background: var(--marigold-soft);
-        }
-
+        /* ---------- Stat blocks & callouts (solid, one zone) ---------- */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+        .stat { border-radius: var(--r-lg); padding: 20px 24px; }
         .stat-label {
-            font-family: var(--font-mono);
-            font-size: 0.68rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--ink-2);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+            text-transform: uppercase; letter-spacing: .1em; margin-bottom: 4px;
         }
-
         .stat-value {
-            font-family: var(--font-display);
-            font-size: 1.9rem;
-            font-weight: 700;
-            color: var(--ink);
+            font-family: var(--font-display); font-size: 38px; font-weight: 700; line-height: 1.15;
             font-variant-numeric: tabular-nums;
         }
+        .stat-sub { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; margin-top: 8px; min-height: 18px; }
+        .gh-bar { height: 10px; margin-top: 12px; border-radius: var(--r-pill); background: color-mix(in srgb, currentColor 24%, transparent); overflow: hidden; }
+        .gh-bar span { display: block; height: 100%; width: 0; background: currentColor; border-radius: var(--r-pill); transition: width .2s; }
 
-        .alert {
-            padding: 1rem 1.25rem;
-            border-radius: var(--r-lg);
-            margin-bottom: 2rem;
-            background: var(--marigold-soft);
-        }
+        .callout { border-radius: var(--r-md); padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
+        .callout .ic { width: 22px; height: 22px; }
+        .callout-title { font-family: var(--font-display); font-weight: 600; font-size: var(--body); }
+        .callout-content { font-family: var(--font-mono); font-weight: 500; font-size: 1.125rem; margin-top: 2px; overflow-wrap: anywhere; }
+        .callout-text { font-size: var(--body-lg); line-height: 1.5; }
 
-        .alert-title {
-            font-family: var(--font-display);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--marigold-ink);
-            font-size: 0.9rem;
-        }
+        /* ---------- Workbench: two columns of cards ---------- */
+        .bench { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+        .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
 
-        .alert-content {
-            font-size: 1.125rem;
-            font-family: var(--font-mono);
-            font-weight: 500;
-            color: var(--ink);
-        }
-
-        .alert.success {
-            background: var(--teal-soft);
-        }
-
-        .alert.success .alert-title {
-            color: var(--teal-ink);
-        }
-
-        .tokens-box {
-            background: var(--paper-3);
-            border-radius: var(--r-lg);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .tokens-box h3 {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 500;
-            color: var(--ink-2);
-            margin-bottom: 1.25rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .tokens-display {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
+        .tokens-display { display: flex; flex-wrap: wrap; gap: 8px; }
         .word-group {
-            display: inline-flex;
-            align-items: center;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: var(--r-sm);
-            padding: 0.375rem;
-            gap: 0.25rem;
+            display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px;
+            background: var(--paper-2); border: 1px solid var(--line-2); border-radius: var(--r-sm);
         }
-
-        .token {
-            padding: 0.25rem 0.5rem;
-            border-radius: var(--r-xs);
-            font-size: 0.8rem;
-            font-family: var(--font-mono);
-            transition: all 0.15s;
-            background: var(--sky-soft);
-            color: var(--sky-ink);
-            font-weight: 500;
-            border: 1px solid var(--sky-soft);
+        .token, .vocab-token {
+            font-family: var(--font-mono); font-size: 13px; font-weight: 500; line-height: 1.5;
+            background: var(--surface); color: var(--ink); border: 1px solid var(--line-2);
+            transition: background-color .15s, color .15s, border-color .15s;
         }
+        .token { padding: 3px 8px; border-radius: var(--r-xs); }
+        .token.bpe, .vocab-token.bpe { background: var(--blue-soft); color: var(--blue-ink); border-color: var(--blue-soft); }
+        .token.highlight { background: var(--yellow); color: var(--yellow-ink); border-color: var(--ink); }
+        .token.unknown { background: var(--surface); border: 1px dashed var(--line-strong); }
 
-        .token.highlight {
-            background: var(--coral-soft);
-            color: var(--coral-ink);
-            border-color: var(--coral);
-            transform: scale(1.05);
-            box-shadow: 0 0 0 2px var(--coral-soft);
-        }
-
-        .vocab-box {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: var(--r-lg);
-            box-shadow: var(--shadow-sm);
-            padding: 1.5rem;
-        }
-
-        .vocab-box h3 {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 500;
-            color: var(--ink-2);
-            margin-bottom: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .vocab-section {
-            margin-bottom: 2rem;
-        }
-
-        .vocab-section:last-child {
-            margin-bottom: 0;
-        }
-
+        .vocab-section + .vocab-section { margin-top: 24px; }
         .vocab-section h4 {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            color: var(--ink-2);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+            font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+            text-transform: uppercase; letter-spacing: .08em; color: var(--ink);
         }
-
-        .badge {
-            font-family: var(--font-mono);
-            padding: 0.25rem 0.55rem;
-            border-radius: var(--r-pill);
-            font-size: 0.62rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            background: var(--ink-2);
-            color: #fff;
-        }
-
-        /* h3 is the vocab-box's first child, so the alphabet section is the
-           2nd child and the BPE section the 3rd — match those positions. */
-        .vocab-section:nth-child(2) .badge {
-            background: var(--sky);
-        }
-
-        .vocab-section:nth-child(3) .badge {
-            background: var(--marigold);
-        }
-
-        .vocab-tokens {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .vocab-token {
-            padding: 0.5rem 0.75rem;
-            border-radius: var(--r-sm);
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            background: var(--marigold-soft);
-            color: var(--marigold-ink);
-            font-weight: 500;
-            border: 1px solid var(--marigold-soft);
-        }
-
-        .vocab-token.alphabet {
-            background: var(--sky-soft);
-            color: var(--sky-ink);
-            border-color: var(--sky-soft);
-        }
-
-        .vocab-token.new {
-            background: var(--success-soft);
-            color: var(--success-ink);
-            border-color: var(--success);
-            font-weight: 600;
-            animation: newTokenPulse 0.5s ease-out;
-        }
-
-        @keyframes newTokenPulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .vocab-token .length {
-            margin-left: 0.375rem;
-            font-size: 0.7rem;
-            color: var(--ink-3);
-            font-weight: 400;
-        }
+        .vocab-tokens { display: flex; flex-wrap: wrap; gap: 8px; }
+        .vocab-token { padding: 6px 11px; border-radius: var(--r-sm); }
+        .vocab-token.alphabet { background: var(--paper-3); border-color: var(--line-2); }
+        .vocab-token.new { background: var(--green-soft); color: var(--green-ink); border-color: var(--green-soft); }
+        .vocab-token .length { margin-left: 6px; font-size: 11px; font-weight: 400; }
 
         .empty-state {
-            color: var(--ink-3);
-            font-style: italic;
-            font-size: 0.85rem;
-            background: var(--paper-2);
-            border: 1px dashed var(--line-2);
-            border-radius: var(--r-sm);
-            padding: 1.25rem;
-            text-align: center;
+            color: var(--ink-3); font-size: var(--body-sm); background: var(--paper-2);
+            border: 1px dashed var(--line-2); border-radius: var(--r-sm); padding: 20px; text-align: center;
         }
 
-        .legend {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--line);
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-        }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
+        .legend-box { flex: none; width: 16px; height: 16px; border-radius: var(--r-xs); border: 1px solid var(--line-2); }
+        .legend-box.alphabet { background: var(--paper-3); }
+        .legend-box.bpe { background: var(--blue-soft); border-color: var(--blue-soft); }
+        .legend-box.new { background: var(--green-soft); border-color: var(--green-soft); }
+        .legend-box.next { background: var(--yellow); border-color: var(--ink); }
+        .legend-box.unknown { background: var(--surface); border: 1px dashed var(--line-strong); }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--ink-2);
-        }
+        /* ---------- Pair counts (single-series bars) ---------- */
+        .pairs { display: grid; gap: 10px; }
+        .pair-row { display: grid; grid-template-columns: minmax(6rem, 9rem) minmax(0, 1fr) 2.5rem; gap: 12px; align-items: center; }
+        .pair-label { font-family: var(--font-mono); font-size: var(--body-sm); color: var(--ink); overflow-wrap: anywhere; }
+        .pair-bar { height: 16px; border-radius: var(--r-xs); background: var(--paper-3); overflow: hidden; }
+        .pair-bar span { display: block; height: 100%; background: var(--ink); border-radius: var(--r-xs); transition: width .2s; }
+        .pair-row.next .pair-bar span { background: var(--yellow); border: 1px solid var(--ink); }
+        .pair-row.next .pair-label { font-weight: 700; }
+        .pair-count { font-family: var(--font-mono); font-size: var(--body-sm); color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
 
-        .legend-box {
-            width: 16px;
-            height: 16px;
-            border-radius: var(--r-xs);
-        }
+        /* ---------- New word demo ---------- */
+        .word-out { margin-top: 14px; min-height: 40px; }
+        .word-readout { margin-top: 12px; font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1.2; color: var(--ink); display: block; }
 
-        .legend-box.alphabet {
-            background: var(--sky-soft);
-            border: 1px solid var(--sky);
-        }
-
-        .legend-box.bpe {
-            background: var(--marigold-soft);
-            border: 1px solid var(--marigold);
-        }
-
-        .legend-box.new {
-            background: var(--success-soft);
-            border: 1px solid var(--success);
-        }
-
-        .history-box {
-            background: var(--surface);
-            border-radius: var(--r-xl);
-            border: 1px solid var(--line);
-            box-shadow: var(--shadow-sm);
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .history-box h2 {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 500;
-            color: var(--ink-2);
-            margin-bottom: 1.25rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .history-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.875rem;
-            background: var(--paper);
-            border: 1px solid var(--line);
-            border-radius: var(--r-sm);
-        }
-
-        .history-step {
-            flex-shrink: 0;
-            width: 3rem;
-            text-align: center;
-        }
-
+        /* ---------- Merge history (ruled rows) ---------- */
+        .history-list { display: flex; flex-direction: column; }
+        .history-item { display: flex; align-items: center; gap: 14px; padding: 10px 22px; border-bottom: 1px solid var(--line); }
+        .history-item:nth-child(even) { background: var(--paper-2); }
+        .history-item:last-child { border-bottom: none; }
         .step-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            background: var(--teal);
-            color: #fff;
-            border-radius: 50%;
-            font-family: var(--font-mono);
-            font-weight: 500;
-            font-size: 0.75rem;
+            flex: none; min-width: 30px; height: 28px; padding: 0 6px; border-radius: var(--r-xs);
+            display: inline-grid; place-items: center;
+            font-family: var(--font-mono); font-weight: 500; font-size: var(--caption);
         }
+        .history-merge { flex: 1; min-width: 0; overflow-wrap: anywhere; font-family: var(--font-mono); font-size: var(--body-sm); color: var(--ink-2); }
+        .history-merge .operator { color: var(--ink-3); margin: 0 8px; }
+        .history-merge .result { color: var(--ink); font-weight: 700; }
+        .history-frequency { font-family: var(--font-mono); font-size: var(--body-sm); color: var(--ink); font-variant-numeric: tabular-nums; }
 
-        .history-merge {
-            flex: 1;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            color: var(--ink-2);
-            font-weight: 500;
-        }
+        /* ---------- Technical notes ---------- */
+        .note p + p { margin-top: 14px; }
+        .checklist { list-style: none; display: grid; gap: 12px; }
+        .checklist li { display: flex; gap: 10px; align-items: flex-start; color: var(--ink-2); line-height: 1.5; }
+        .checklist .ic { color: var(--ink); margin-top: 3px; }
 
-        .history-merge .operator {
-            color: var(--ink-3);
-            margin: 0 0.5rem;
-        }
-
-        .history-merge .result {
-            color: var(--marigold-ink);
-            font-weight: 600;
-        }
-
-        .note-box {
-            background: var(--surface);
-            border-radius: var(--r-xl);
-            border: 1px solid var(--line);
-            box-shadow: var(--shadow-sm);
-            padding: 2rem;
-        }
-
-        .note-box h2 {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            font-weight: 500;
-            color: var(--ink-2);
-            margin-bottom: 1.25rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .note-box p {
-            color: var(--ink-2);
-            line-height: 1.7;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-        }
-
-        .note-box p:last-child {
-            margin-bottom: 0;
-        }
-
-        .note-box code {
-            background: var(--paper-3);
-            padding: 0.125rem 0.4rem;
-            border-radius: var(--r-xs);
-            font-family: var(--font-mono);
-            font-size: 0.85em;
-            color: var(--ink);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        svg {
-            flex-shrink: 0;
+        @media (max-width: 768px) {
+            .page-head { padding: 28px var(--gutter) 32px; }
+            .sec { padding: 36px 0 44px; }
+            .sec-head { flex-wrap: wrap; }
+            .sec-head h2 { flex: 1; min-width: 0; font-size: var(--h3); }
+            .sec-head::after { flex: 1 0 100%; }
+            .chain, .controls-grid, .stats-grid, .bench, .pair, .tiles3 { grid-template-columns: minmax(0, 1fr); }
+            .chain { gap: 28px; }
+            .link:not(:last-child)::after { content: "↓"; left: 50%; top: 100%; width: auto; line-height: 28px; transform: translateX(-50%); }
+            .card-head, .card-body, .card-foot { padding-inline: 16px; }
+            .history-item { padding-inline: 16px; }
+            .stat-value { font-size: 32px; }
+            .edu-logo { width: 48px; height: 48px; }
         }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/lucide@1.57.0/dist/umd/lucide.min.js"
+        integrity="sha384-Qp5jsYqEgOGiWD8YMQ6yXIycASOePxr9mmbt+Ua0Wu1IScYxo0Pxf7o3Kx6NWJID"
+        crossorigin="anonymous" async></script>
 </head>
-<body>
+<body class="edu">
     <header class="edu-header">
         <div class="edu-header-inner">
-            <img class="edu-logo" alt="edulab" src="data:image/png;base64,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">
+            <img class="edu-logo" alt="edulab" src="data:image/png;base64,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">
             <span class="edu-wordmark">edulab</span>
-            <span class="edu-tag">demo lab</span>
+            <div class="edu-seg" role="group" aria-label="Język / Language">
+                <button type="button" data-lang="pl" class="active" aria-pressed="true">PL</button>
+                <button type="button" data-lang="en" aria-pressed="false">EN</button>
+            </div>
         </div>
     </header>
 
-    <div class="container">
-        <div class="header">
-            <p class="edu-overline">Interactive demo · 4 min</p>
-            <h1>Byte Pair Encoding</h1>
-            <p class="subtitle">Visualization of the tokenization algorithm used in GPT and other language models</p>
-        </div>
+    <main id="app" data-lang="pl" data-step="0" data-vocab-size="0" data-target="30" data-token-count="0" data-token-start="0" data-playing="false" data-best-pair="" data-word-tokens="0">
+        <header class="page-head">
+            <h1 class="app-title">Byte Pair Encoding</h1>
+            <p class="edu-lead" data-i18n="lead">Zobacz krok po kroku, jak powstają tokeny, czyli kawałki tekstu, na których pracują GPT i inne modele językowe.</p>
+        </header>
 
-        <div class="card">
-            <div class="info-box">
-                <h2>How it works</h2>
-                <ol>
-                    <li>Start with individual characters as tokens</li>
-                    <li>Find the most frequent pair of adjacent tokens</li>
-                    <li>Merge that pair into a new token</li>
-                    <li>Repeat until reaching the target vocabulary size</li>
-                </ol>
+        <section class="sec"><div class="wrap">
+            <div class="sec-head">
+                <span class="badge badge-lg tone-ink"><i data-lucide="puzzle" class="ic" aria-hidden="true"></i></span>
+                <h2 data-i18n="whyTitle">Po co tokeny</h2>
             </div>
-
-            <div class="controls-grid">
-                <div>
-                    <label>Input Text</label>
-                    <textarea id="inputText" rows="3" placeholder="Enter text with repeating patterns...">the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.</textarea>
-                    <p class="hint">Change text and click outside or press Reset</p>
+            <div class="tiles3">
+                <div class="card">
+                    <div class="card-head"><span class="tile-h">
+                        <span class="badge tone-grape"><i data-lucide="hash" class="ic" aria-hidden="true"></i></span>
+                        <h3 data-i18n="why1Title">Model liczy, nie czyta</h3>
+                    </span></div>
+                    <div class="card-body"><p data-i18n="why1Text">Tekst trzeba pociąć na kawałki i każdemu nadać numer. Te kawałki to tokeny.</p></div>
                 </div>
-                <div>
-                    <label>Target Vocabulary Size: <span class="target-value" id="targetValue">30</span></label>
-                    <div class="slider-container">
-                        <input type="range" id="targetSlider" min="10" max="100" value="30">
-                    </div>
-                    <div class="slider-labels">
-                        <span>Fewer</span>
-                        <span>More</span>
-                    </div>
-                    <div class="button-group">
-                        <button id="resetBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                                <path d="M21 3v5h-5"/>
-                                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                                <path d="M3 21v-5h5"/>
-                            </svg>
-                            Reset
-                        </button>
-                        <button id="autoBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="5 3 19 12 5 21 5 3"/>
-                            </svg>
-                            <span id="autoText">Auto</span>
-                        </button>
-                        <button id="stepBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"/>
-                            </svg>
-                            Step
-                        </button>
-                    </div>
+                <div class="card">
+                    <div class="card-head"><span class="tile-h">
+                        <span class="badge tone-blue"><i data-lucide="whole-word" class="ic" aria-hidden="true"></i></span>
+                        <h3 data-i18n="why2Title">Całych słów jest za dużo</h3>
+                    </span></div>
+                    <div class="card-body"><p data-i18n="why2Text">Słownik musiałby mieć miliony pozycji, a nowego słowa i tak by w nim zabrakło.</p></div>
+                </div>
+                <div class="card">
+                    <div class="card-head"><span class="tile-h">
+                        <span class="badge tone-green"><i data-lucide="a-large-small" class="ic" aria-hidden="true"></i></span>
+                        <h3 data-i18n="why3Title">Same litery to za mało</h3>
+                    </span></div>
+                    <div class="card-body"><p data-i18n="why3Text">Słownik jest mały, ale każde zdanie zamienia się w bardzo długi ciąg.</p></div>
                 </div>
             </div>
+            <div class="callout tone-yellow edu-block">
+                <i data-lucide="scale" class="ic" aria-hidden="true"></i>
+                <p class="callout-text" data-i18n="whyCallout">BPE wybiera środek: częste fragmenty stają się jednym tokenem, a rzadkie słowa składa się z mniejszych części.</p>
+            </div>
+        </div></section>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Current Step</div>
-                    <div class="stat-value" id="stepCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Vocabulary Size</div>
-                    <div class="stat-value"><span id="vocabSize">0</span> / <span id="vocabTarget">30</span></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Token Count</div>
-                    <div class="stat-value" id="tokenCount">0</div>
-                </div>
+        <section class="sec"><div class="wrap">
+            <div class="sec-head">
+                <span class="badge badge-lg tone-ink"><i data-lucide="lightbulb" class="ic" aria-hidden="true"></i></span>
+                <h2 data-i18n="howTitle">Jak to działa</h2>
+            </div>
+            <ol class="chain">
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">1</span><span data-i18n="how1">Zacznij od pojedynczych znaków jako tokenów</span></li>
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">2</span><span data-i18n="how2">Znajdź najczęstszą parę sąsiednich tokenów</span></li>
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">3</span><span data-i18n="how3">Połącz tę parę w nowy token</span></li>
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">4</span><span data-i18n="how4">Powtarzaj, aż słownik osiągnie docelowy rozmiar</span></li>
+            </ol>
+        </div></section>
+
+        <section class="sec"><div class="wrap">
+            <div class="sec-head">
+                <span class="badge badge-lg tone-ink"><i data-lucide="flask-conical" class="ic" aria-hidden="true"></i></span>
+                <h2 data-i18n="tryTitle">Wypróbuj</h2>
             </div>
 
-            <div id="bestPairAlert" class="alert hidden">
-                <div class="alert-title">Most frequent pair (<span id="pairFrequency">0</span> occurrences)</div>
-                <div class="alert-content" id="pairDisplay"></div>
-            </div>
-
-            <div id="completedAlert" class="alert success hidden">
-                <div class="alert-title" style="text-align: center;">
-                    Target vocabulary size reached
-                </div>
-            </div>
-
-            <div class="tokens-box">
-                <h3>Current Tokens</h3>
-                <div class="tokens-display" id="tokensDisplay"></div>
-            </div>
-
-            <div class="vocab-box">
-                <h3>Vocabulary (<span id="totalVocabSize">0</span> tokens)</h3>
-
-                <div class="vocab-section">
-                    <h4>
-                        <span class="badge">Alphabet</span>
-                        Single character tokens
-                    </h4>
-                    <div class="vocab-tokens" id="alphabetTokens"></div>
-                </div>
-
-                <div class="vocab-section">
-                    <h4>
-                        <span class="badge">BPE</span>
-                        Merged tokens (<span id="bpeCount">0</span>)
-                    </h4>
-                    <div id="bpeTokensContainer">
-                        <div class="empty-state">
-                            Click "Step" or "Auto" to start creating tokens
+            <div class="stack">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="controls-grid">
+                            <div>
+                                <label class="field-label" for="inputText" data-i18n="inputLabel">Tekst wejściowy</label>
+                                <textarea id="inputText" rows="4" data-i18n-placeholder="inputPlaceholder" placeholder="Wpisz tekst z powtarzającymi się fragmentami..."></textarea>
+                                <p class="hint" data-i18n="inputHint">Zmień tekst i kliknij poza polem albo naciśnij Reset</p>
+                            </div>
+                            <div>
+                                <label class="field-label" for="targetSlider"><span data-i18n="targetLabel">Docelowy rozmiar słownika:</span> <span class="target-value" id="targetValue">30</span></label>
+                                <input type="range" id="targetSlider" min="10" max="100" value="30">
+                                <div class="slider-labels">
+                                    <span data-i18n="fewer">Mniej</span>
+                                    <span data-i18n="more">Więcej</span>
+                                </div>
+                                <div class="button-group">
+                                    <button type="button" class="btn" id="resetBtn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                            <path d="M21 3v5h-5"/>
+                                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                            <path d="M3 21v-5h5"/>
+                                        </svg>
+                                        <span data-i18n="reset">Reset</span>
+                                    </button>
+                                    <button type="button" class="btn" id="autoBtn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <polygon points="5 3 19 12 5 21 5 3"/>
+                                        </svg>
+                                        <span id="autoText">Auto</span>
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="stepBtn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <polyline points="9 18 15 12 9 6"/>
+                                        </svg>
+                                        <span data-i18n="step">Krok</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-box alphabet"></div>
-                        <span>Alphabet tokens</span>
+                <div class="stats-grid">
+                    <div class="stat tone-yellow edu-block">
+                        <div class="stat-label" data-i18n="statStep">Bieżący krok</div>
+                        <div class="stat-value" id="stepCount">0</div>
+                        <div class="stat-sub" id="stepSub"></div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-box bpe"></div>
-                        <span>BPE tokens</span>
+                    <div class="stat tone-blue edu-block">
+                        <div class="stat-label" data-i18n="statVocab">Rozmiar słownika</div>
+                        <div class="stat-value"><span id="vocabSize">0</span> / <span id="vocabTarget">30</span></div>
+                        <div class="gh-bar" aria-hidden="true"><span id="vocabBar"></span></div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-box new"></div>
-                        <span>Newly created</span>
+                    <div class="stat tone-green edu-block">
+                        <div class="stat-label" data-i18n="statTokens">Liczba tokenów</div>
+                        <div class="stat-value" id="tokenCount">0</div>
+                        <div class="stat-sub" id="tokenSub"></div>
+                    </div>
+                </div>
+
+                <div id="bestPairAlert" class="callout tone-yellow edu-block hidden" aria-live="polite">
+                    <i data-lucide="git-merge" class="ic" aria-hidden="true"></i>
+                    <div>
+                        <div class="callout-title" id="pairTitle"></div>
+                        <div class="callout-content" id="pairDisplay"></div>
+                    </div>
+                </div>
+
+                <div id="completedAlert" class="callout tone-green edu-block hidden" aria-live="polite">
+                    <i data-lucide="circle-check" class="ic" aria-hidden="true"></i>
+                    <div class="callout-title" data-i18n="completed">Słownik osiągnął docelowy rozmiar</div>
+                </div>
+
+                <div id="noPairsAlert" class="callout tone-stone edu-block hidden" aria-live="polite">
+                    <i data-lucide="circle-slash" class="ic" aria-hidden="true"></i>
+                    <div class="callout-title" data-i18n="noPairs">Nie ma już par do połączenia</div>
+                </div>
+
+                <div class="bench">
+                    <div class="stack">
+                        <div class="card">
+                            <div class="card-head">
+                                <span class="tile-h">
+                                    <span class="badge tone-ink"><i data-lucide="blocks" class="ic" aria-hidden="true"></i></span>
+                                    <h3 data-i18n="tokensTitle">Bieżące tokeny</h3>
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="tokens-display" id="tokensDisplay"></div>
+                            </div>
+                        </div>
+
+                        <div id="historyBox" class="card hidden">
+                            <div class="card-head">
+                                <span class="tile-h">
+                                    <span class="badge tone-ink"><i data-lucide="history" class="ic" aria-hidden="true"></i></span>
+                                    <h3 data-i18n="historyTitle">Historia połączeń</h3>
+                                </span>
+                            </div>
+                            <div class="history-list" id="historyList"></div>
+                        </div>
+                    </div>
+
+                    <div class="stack">
+                        <div class="card">
+                            <div class="card-head">
+                                <span class="tile-h">
+                                    <span class="badge tone-ink"><i data-lucide="chart-bar" class="ic" aria-hidden="true"></i></span>
+                                    <h3 data-i18n="pairsTitle">Najczęstsze pary</h3>
+                                </span>
+                                <span class="count" id="pairsCount"></span>
+                            </div>
+                            <div class="card-body">
+                                <div class="pairs" id="pairsList"></div>
+                            </div>
+                            <div class="card-foot">
+                                <div class="legend-item">
+                                    <div class="legend-box next"></div>
+                                    <span data-i18n="legendNext">Następne połączenie</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-head">
+                                <span class="tile-h">
+                                    <span class="badge tone-ink"><i data-lucide="book-a" class="ic" aria-hidden="true"></i></span>
+                                    <h3 data-i18n="vocabTitle">Słownik</h3>
+                                </span>
+                                <span class="count" id="totalVocabSize"></span>
+                            </div>
+                            <div class="card-body">
+                                <div class="vocab-section">
+                                    <h4>
+                                        <span class="edu-chip tone-stone" data-i18n="alphabetChip">Alfabet</span>
+                                        <span data-i18n="alphabetLabel">Tokeny jednoznakowe</span>
+                                    </h4>
+                                    <div class="vocab-tokens" id="alphabetTokens"></div>
+                                </div>
+
+                                <div class="vocab-section">
+                                    <h4>
+                                        <span class="edu-chip tone-blue">BPE</span>
+                                        <span><span data-i18n="mergedLabel">Połączone tokeny</span> (<span id="bpeCount">0</span>)</span>
+                                    </h4>
+                                    <div id="bpeTokensContainer"></div>
+                                </div>
+                            </div>
+                            <div class="card-foot">
+                                <div class="legend-item">
+                                    <div class="legend-box alphabet"></div>
+                                    <span data-i18n="legendAlphabet">Tokeny alfabetu</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-box bpe"></div>
+                                    <span data-i18n="legendBpe">Tokeny BPE</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-box new"></div>
+                                    <span data-i18n="legendNew">Nowo utworzony</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-head">
+                                <span class="tile-h">
+                                    <span class="badge tone-ink"><i data-lucide="text-cursor-input" class="ic" aria-hidden="true"></i></span>
+                                    <h3 data-i18n="wordTitle">Nowe słowo</h3>
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <label class="field-label" for="wordInput" data-i18n="wordLabel">Słowo, którego nie było w tekście</label>
+                                <input type="text" class="input" id="wordInput" autocomplete="off" spellcheck="false">
+                                <div class="tokens-display word-out" id="wordOut"></div>
+                                <output class="word-readout" id="wordReadout" for="wordInput" aria-live="polite"></output>
+                                <p class="hint" data-i18n="wordHint">Słowo jest dzielone tymi samymi połączeniami i w tej samej kolejności. Im więcej kroków, tym mniej tokenów.</p>
+                            </div>
+                            <div class="card-foot hidden" id="wordFoot">
+                                <div class="legend-item">
+                                    <div class="legend-box unknown"></div>
+                                    <span data-i18n="legendUnknown">Znaku nie ma w słowniku</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div></section>
 
-        <div id="historyBox" class="history-box hidden">
-            <h2>Merge History</h2>
-            <div class="history-list" id="historyList"></div>
-        </div>
-
-        <div class="note-box">
-            <h2>Technical Note</h2>
-            <p>
-                This visualization omits the end-of-word marker (typically denoted as <code>&lt;/w&gt;</code>) for clarity.
-                In real BPE, each word's final character is marked with a special symbol, allowing the algorithm to distinguish
-                tokens like "er" at the end of a word ("lower") from "er" in the middle ("merry").
-            </p>
-            <p>
-                This ensures BPE knows not to merge tokens across word boundaries. In this app, we use a <code>|</code> separator between words
-                that serves a similar role but is hidden from display.
-            </p>
-        </div>
-    </div>
+        <section class="sec"><div class="wrap">
+            <div class="sec-head">
+                <span class="badge badge-lg tone-ink"><i data-lucide="info" class="ic" aria-hidden="true"></i></span>
+                <h2 data-i18n="noteTitle">Uwagi techniczne</h2>
+            </div>
+            <div class="pair">
+                <div class="card">
+                    <div class="card-head"><span class="tile-h">
+                        <span class="badge tone-ink"><i data-lucide="whole-word" class="ic" aria-hidden="true"></i></span>
+                        <h3 data-i18n="note1Title">Granice słów</h3>
+                    </span></div>
+                    <div class="card-body note">
+                        <p data-i18n-html="note1p1">Ta wizualizacja pomija znacznik końca słowa (zwykle zapisywany jako <code>&lt;/w&gt;</code>). W klasycznym BPE ostatni znak każdego słowa dostaje taki symbol, więc algorytm odróżnia „er” na końcu słowa („lower”) od „er” w środku („merry”).</p>
+                        <p data-i18n-html="note1p2">Dzięki temu BPE nie łączy tokenów ponad granicami słów. W tej aplikacji robi to separator <code>|</code> wstawiany między słowa. Na ekranie go nie widać.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head"><span class="tile-h">
+                        <span class="badge tone-ink"><i data-lucide="scale" class="ic" aria-hidden="true"></i></span>
+                        <h3 data-i18n="note2Title">Demo a prawdziwe modele</h3>
+                    </span></div>
+                    <div class="card-body">
+                        <ul class="checklist">
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2a">Tekst jest zamieniany na małe litery.</span></li>
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2b">Przy remisie wygrywa para, która pojawiła się w tekście pierwsza.</span></li>
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2c">Modele GPT pracują na bajtach, a spację doklejają do początku następnego tokenu.</span></li>
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2d">Prawdziwe słowniki są dużo większe: GPT-2 ma 50 257 tokenów wyuczonych na ogromnym zbiorze tekstów.</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div></section>
+    </main>
 
     <script>
-        // Application State
+        // ─── Constants ───
+        const AUTO_STEP_MS = 1000;
+        const FONT_WAIT_MS = 1500;
+        const TOP_PAIRS = 5;
+        const LANG_KEY = 'bpe-lang';
+        const LANGS = ['pl', 'en'];
+        const BRAND_FONTS = ['400 1em Outfit', '700 1em Outfit', '400 1em "IBM Plex Sans"', '600 1em "IBM Plex Sans"', '400 1em "Roboto Mono"'];
+
+        const SAMPLE_TEXT = {
+            pl: 'pisarz przepisał przepis i zapisał opis. czytelnik przeczytał zapis, odczytał podpis i przepisał napis.',
+            en: 'the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.'
+        };
+        const SAMPLE_WORD = { pl: 'odpisał', en: 'transformer' };
+
+        const T = {
+            pl: {
+                docTitle: 'Byte Pair Encoding – wizualizacja',
+                lead: 'Zobacz krok po kroku, jak powstają tokeny, czyli kawałki tekstu, na których pracują GPT i inne modele językowe.',
+                whyTitle: 'Po co tokeny',
+                why1Title: 'Model liczy, nie czyta',
+                why1Text: 'Tekst trzeba pociąć na kawałki i każdemu nadać numer. Te kawałki to tokeny.',
+                why2Title: 'Całych słów jest za dużo',
+                why2Text: 'Słownik musiałby mieć miliony pozycji, a nowego słowa i tak by w nim zabrakło.',
+                why3Title: 'Same litery to za mało',
+                why3Text: 'Słownik jest mały, ale każde zdanie zamienia się w bardzo długi ciąg.',
+                whyCallout: 'BPE wybiera środek: częste fragmenty stają się jednym tokenem, a rzadkie słowa składa się z mniejszych części.',
+                howTitle: 'Jak to działa',
+                how1: 'Zacznij od pojedynczych znaków jako tokenów',
+                how2: 'Znajdź najczęstszą parę sąsiednich tokenów',
+                how3: 'Połącz tę parę w nowy token',
+                how4: 'Powtarzaj, aż słownik osiągnie docelowy rozmiar',
+                tryTitle: 'Wypróbuj',
+                inputLabel: 'Tekst wejściowy',
+                inputPlaceholder: 'Wpisz tekst z powtarzającymi się fragmentami...',
+                inputHint: 'Zmień tekst i kliknij poza polem albo naciśnij Reset',
+                targetLabel: 'Docelowy rozmiar słownika:',
+                fewer: 'Mniej',
+                more: 'Więcej',
+                reset: 'Reset',
+                auto: 'Auto',
+                stop: 'Stop',
+                step: 'Krok',
+                statStep: 'Bieżący krok',
+                statVocab: 'Rozmiar słownika',
+                statTokens: 'Liczba tokenów',
+                stepSub: 'ostatni nowy token:',
+                stepSubNone: 'jeszcze bez połączeń',
+                startedAt: 'na starcie',
+                pairTitle: 'Najczęstsza para',
+                completed: 'Słownik osiągnął docelowy rozmiar',
+                noPairs: 'Nie ma już par do połączenia',
+                tokensTitle: 'Bieżące tokeny',
+                historyTitle: 'Historia połączeń',
+                pairsTitle: 'Najczęstsze pary',
+                pairsEmpty: 'Brak par do policzenia',
+                legendNext: 'Następne połączenie',
+                vocabTitle: 'Słownik',
+                alphabetChip: 'Alfabet',
+                alphabetLabel: 'Tokeny jednoznakowe',
+                mergedLabel: 'Połączone tokeny',
+                emptyBpe: 'Kliknij „Krok” albo „Auto”, aby utworzyć pierwsze tokeny',
+                legendAlphabet: 'Tokeny alfabetu',
+                legendBpe: 'Tokeny BPE',
+                legendNew: 'Nowo utworzony',
+                wordTitle: 'Nowe słowo',
+                wordLabel: 'Słowo, którego nie było w tekście',
+                wordHint: 'Słowo jest dzielone tymi samymi połączeniami i w tej samej kolejności. Im więcej kroków, tym mniej tokenów.',
+                wordEmpty: 'Wpisz słowo',
+                legendUnknown: 'Znaku nie ma w słowniku',
+                noteTitle: 'Uwagi techniczne',
+                note1Title: 'Granice słów',
+                note1p1: 'Ta wizualizacja pomija znacznik końca słowa (zwykle zapisywany jako <code>&lt;/w&gt;</code>). W klasycznym BPE ostatni znak każdego słowa dostaje taki symbol, więc algorytm odróżnia „er” na końcu słowa („lower”) od „er” w środku („merry”).',
+                note1p2: 'Dzięki temu BPE nie łączy tokenów ponad granicami słów. W tej aplikacji robi to separator <code>|</code> wstawiany między słowa. Na ekranie go nie widać.',
+                note2Title: 'Demo a prawdziwe modele',
+                note2a: 'Tekst jest zamieniany na małe litery.',
+                note2b: 'Przy remisie wygrywa para, która pojawiła się w tekście pierwsza.',
+                note2c: 'Modele GPT pracują na bajtach, a spację doklejają do początku następnego tokenu.',
+                note2d: 'Prawdziwe słowniki są dużo większe: GPT-2 ma 50 257 tokenów wyuczonych na ogromnym zbiorze tekstów.',
+                tokenForms: ['token', 'tokeny', 'tokenów'],
+                occurrenceForms: ['wystąpienie', 'wystąpienia', 'wystąpień'],
+                pairForms: ['para', 'pary', 'par']
+            },
+            en: {
+                docTitle: 'Byte Pair Encoding Visualizer',
+                lead: 'See step by step how tokens are made: the pieces of text that GPT and other language models work on.',
+                whyTitle: 'Why tokens',
+                why1Title: 'Models count, they do not read',
+                why1Text: 'Text has to be cut into pieces and each piece gets a number. Those pieces are tokens.',
+                why2Title: 'Whole words are too many',
+                why2Text: 'The vocabulary would need millions of entries, and a new word would still be missing.',
+                why3Title: 'Single letters are too few',
+                why3Text: 'The vocabulary is small, but every sentence turns into a very long sequence.',
+                whyCallout: 'BPE takes the middle road: frequent fragments become one token, and rare words are built from smaller parts.',
+                howTitle: 'How it works',
+                how1: 'Start with individual characters as tokens',
+                how2: 'Find the most frequent pair of adjacent tokens',
+                how3: 'Merge that pair into a new token',
+                how4: 'Repeat until reaching the target vocabulary size',
+                tryTitle: 'Try it',
+                inputLabel: 'Input text',
+                inputPlaceholder: 'Enter text with repeating patterns...',
+                inputHint: 'Change text and click outside or press Reset',
+                targetLabel: 'Target vocabulary size:',
+                fewer: 'Fewer',
+                more: 'More',
+                reset: 'Reset',
+                auto: 'Auto',
+                stop: 'Stop',
+                step: 'Step',
+                statStep: 'Current step',
+                statVocab: 'Vocabulary size',
+                statTokens: 'Token count',
+                stepSub: 'latest new token:',
+                stepSubNone: 'no merges yet',
+                startedAt: 'started at',
+                pairTitle: 'Most frequent pair',
+                completed: 'Target vocabulary size reached',
+                noPairs: 'No pairs left to merge',
+                tokensTitle: 'Current tokens',
+                historyTitle: 'Merge history',
+                pairsTitle: 'Most frequent pairs',
+                pairsEmpty: 'No pairs to count',
+                legendNext: 'Next merge',
+                vocabTitle: 'Vocabulary',
+                alphabetChip: 'Alphabet',
+                alphabetLabel: 'Single character tokens',
+                mergedLabel: 'Merged tokens',
+                emptyBpe: 'Click "Step" or "Auto" to start creating tokens',
+                legendAlphabet: 'Alphabet tokens',
+                legendBpe: 'BPE tokens',
+                legendNew: 'Newly created',
+                wordTitle: 'A new word',
+                wordLabel: 'A word that was not in the text',
+                wordHint: 'The word is split with the same merges, in the same order. More steps, fewer tokens.',
+                wordEmpty: 'Type a word',
+                legendUnknown: 'Character is not in the vocabulary',
+                noteTitle: 'Technical notes',
+                note1Title: 'Word boundaries',
+                note1p1: 'This visualization omits the end-of-word marker (typically denoted as <code>&lt;/w&gt;</code>) for clarity. In classic BPE, each word\'s final character is marked with a special symbol, allowing the algorithm to distinguish tokens like "er" at the end of a word ("lower") from "er" in the middle ("merry").',
+                note1p2: 'This ensures BPE knows not to merge tokens across word boundaries. In this app, a <code>|</code> separator between words does that job. It is hidden from display.',
+                note2Title: 'Demo vs real models',
+                note2a: 'The text is lowercased.',
+                note2b: 'On a tie, the pair that appeared first in the text wins.',
+                note2c: 'GPT models work on bytes and attach the space to the start of the next token.',
+                note2d: 'Real vocabularies are far larger: GPT-2 has 50,257 tokens learned from a huge collection of text.',
+                tokenForms: ['token', 'tokens'],
+                occurrenceForms: ['occurrence', 'occurrences'],
+                pairForms: ['pair', 'pairs']
+            }
+        };
+
+        // ─── State ───
         const state = {
-            text: "the performers performed transformation on the stage. their performance transformed the audience. shocked viewers required a formal therapy.",
+            lang: 'pl',
+            text: '',
             targetVocabSize: 30,
             tokens: [],
+            tokenStart: 0,
             vocabulary: new Set(),
             step: 0,
             mergeHistory: [],
@@ -927,8 +957,10 @@
             autoPlayTimer: null
         };
 
-        // DOM Elements
+        // ─── DOM refs ───
         const elements = {
+            app: document.getElementById('app'),
+            langButtons: document.querySelectorAll('.edu-seg button'),
             inputText: document.getElementById('inputText'),
             targetSlider: document.getElementById('targetSlider'),
             targetValue: document.getElementById('targetValue'),
@@ -937,21 +969,94 @@
             stepBtn: document.getElementById('stepBtn'),
             autoText: document.getElementById('autoText'),
             stepCount: document.getElementById('stepCount'),
+            stepSub: document.getElementById('stepSub'),
             vocabSize: document.getElementById('vocabSize'),
             vocabTarget: document.getElementById('vocabTarget'),
+            vocabBar: document.getElementById('vocabBar'),
             tokenCount: document.getElementById('tokenCount'),
+            tokenSub: document.getElementById('tokenSub'),
             bestPairAlert: document.getElementById('bestPairAlert'),
-            pairFrequency: document.getElementById('pairFrequency'),
+            pairTitle: document.getElementById('pairTitle'),
             pairDisplay: document.getElementById('pairDisplay'),
             completedAlert: document.getElementById('completedAlert'),
+            noPairsAlert: document.getElementById('noPairsAlert'),
             tokensDisplay: document.getElementById('tokensDisplay'),
             totalVocabSize: document.getElementById('totalVocabSize'),
             alphabetTokens: document.getElementById('alphabetTokens'),
             bpeTokensContainer: document.getElementById('bpeTokensContainer'),
             bpeCount: document.getElementById('bpeCount'),
             historyBox: document.getElementById('historyBox'),
-            historyList: document.getElementById('historyList')
+            historyList: document.getElementById('historyList'),
+            pairsList: document.getElementById('pairsList'),
+            pairsCount: document.getElementById('pairsCount'),
+            wordInput: document.getElementById('wordInput'),
+            wordOut: document.getElementById('wordOut'),
+            wordReadout: document.getElementById('wordReadout'),
+            wordFoot: document.getElementById('wordFoot')
         };
+
+        // ─── Helpers ───
+        function icons(root = document) {
+            if (window.lucide) window.lucide.createIcons({ root });
+        }
+
+        function t(key) {
+            return T[state.lang][key] ?? T.en[key] ?? key;
+        }
+
+        // "3 tokeny" / "5 tokenów" / "1 token"
+        function plural(n, key) {
+            const forms = t(key);
+            if (state.lang === 'pl') {
+                if (n === 1) return `${n} ${forms[0]}`;
+                const few = n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14);
+                return `${n} ${few ? forms[1] : forms[2]}`;
+            }
+            return `${n} ${n === 1 ? forms[0] : forms[1]}`;
+        }
+
+        function el(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
+
+        function readStoredLang() {
+            const fromUrl = new URLSearchParams(location.search).get('lang');
+            if (LANGS.includes(fromUrl)) return fromUrl;
+            try {
+                const stored = localStorage.getItem(LANG_KEY);
+                if (LANGS.includes(stored)) return stored;
+            } catch (e) { /* storage unavailable: keep the default */ }
+            return 'pl';
+        }
+
+        // Merge every adjacent (token1, token2) pair in a token list
+        function mergePair(tokens, token1, token2) {
+            const merged = [];
+            let i = 0;
+            while (i < tokens.length) {
+                if (i < tokens.length - 1 && tokens[i] === token1 && tokens[i + 1] === token2) {
+                    merged.push(token1 + token2);
+                    i += 2;
+                } else {
+                    merged.push(tokens[i]);
+                    i += 1;
+                }
+            }
+            return merged;
+        }
+
+        // Split a new word with the merges learned so far, in the order they were learned
+        function encodeWord(word) {
+            let tokens = word.split('');
+            state.mergeHistory.forEach(merge => {
+                const [token1, token2] = merge.pair.split(' ');
+                tokens = mergePair(tokens, token1, token2);
+            });
+            return tokens;
+        }
 
         // Initialize tokens from text
         function initializeTokens() {
@@ -971,6 +1076,7 @@
             });
 
             state.tokens = initialTokens;
+            state.tokenStart = initialTokens.length;
             state.vocabulary = new Set(initialTokens);
             state.step = 0;
             state.mergeHistory = [];
@@ -1018,20 +1124,7 @@
             const [token1, token2] = state.bestPair.split(' ');
             const newToken = token1 + token2;
 
-            // Merge tokens
-            const newTokens = [];
-            let i = 0;
-            while (i < state.tokens.length) {
-                if (i < state.tokens.length - 1 && state.tokens[i] === token1 && state.tokens[i + 1] === token2) {
-                    newTokens.push(newToken);
-                    i += 2;
-                } else {
-                    newTokens.push(state.tokens[i]);
-                    i += 1;
-                }
-            }
-
-            state.tokens = newTokens;
+            state.tokens = mergePair(state.tokens, token1, token2);
             state.vocabulary.add(newToken);
             state.mergeHistory.push({
                 step: state.step + 1,
@@ -1046,7 +1139,7 @@
 
             // Check if we should continue auto-play
             if (state.isPlaying && state.vocabulary.size < state.targetVocabSize && state.bestPair) {
-                state.autoPlayTimer = setTimeout(performMerge, 1000);
+                state.autoPlayTimer = setTimeout(performMerge, AUTO_STEP_MS);
             } else {
                 stopAutoPlay();
             }
@@ -1066,106 +1159,152 @@
                 return;
             }
             state.isPlaying = true;
-            elements.autoText.textContent = 'Stop';
+            elements.autoText.textContent = t('stop');
             elements.autoBtn.classList.add('active');
+            elements.app.dataset.playing = 'true';
             performMerge();
         }
 
         function stopAutoPlay() {
             state.isPlaying = false;
-            elements.autoText.textContent = 'Auto';
+            elements.autoText.textContent = t('auto');
             elements.autoBtn.classList.remove('active');
+            elements.app.dataset.playing = 'false';
             if (state.autoPlayTimer) {
                 clearTimeout(state.autoPlayTimer);
                 state.autoPlayTimer = null;
             }
         }
 
+        // Switch the interface language; untouched sample inputs follow the language
+        function setLang(next) {
+            const previous = state.lang;
+            state.lang = next;
+            try { localStorage.setItem(LANG_KEY, next); } catch (e) { /* storage unavailable */ }
+
+            const textWasSample = elements.inputText.value.trim() === SAMPLE_TEXT[previous];
+            if (elements.wordInput.value.trim() === SAMPLE_WORD[previous]) {
+                elements.wordInput.value = SAMPLE_WORD[next];
+            }
+
+            applyLang();
+            if (textWasSample && previous !== next) {
+                elements.inputText.value = SAMPLE_TEXT[next];
+                initializeTokens();
+            } else {
+                updateUI();
+            }
+        }
+
+        // ─── Render ───
+        // Static texts: every element marked with data-i18n*
+        function applyLang() {
+            document.documentElement.lang = state.lang;
+            document.title = t('docTitle');
+            elements.app.dataset.lang = state.lang;
+
+            document.querySelectorAll('[data-i18n]').forEach(node => { node.textContent = t(node.dataset.i18n); });
+            // data-i18n-html holds our own static strings with <code> markup, never user input
+            document.querySelectorAll('[data-i18n-html]').forEach(node => { node.innerHTML = t(node.dataset.i18nHtml); });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(node => { node.placeholder = t(node.dataset.i18nPlaceholder); });
+
+            elements.autoText.textContent = t(state.isPlaying ? 'stop' : 'auto');
+            elements.langButtons.forEach(button => {
+                const isActive = button.dataset.lang === state.lang;
+                button.classList.toggle('active', isActive);
+                button.setAttribute('aria-pressed', String(isActive));
+            });
+        }
+
+        // Build word groups from a flat token list ('|' separates words)
+        function buildWordGroups(tokens, classFor) {
+            const groups = [];
+            let current = null;
+            tokens.forEach((token, idx) => {
+                if (token === '|') { current = null; return; }
+                if (!current) {
+                    current = el('div', 'word-group');
+                    groups.push(current);
+                }
+                current.appendChild(el('span', 'token' + classFor(token, idx), token));
+            });
+            return groups;
+        }
+
         // Render tokens with word boundaries
         function renderTokens() {
-            const result = [];
-            let currentWord = [];
-
-            state.tokens.forEach((token, idx) => {
-                if (token === '|') {
-                    // End of word - add the word group
-                    if (currentWord.length > 0) {
-                        const wordGroup = document.createElement('div');
-                        wordGroup.className = 'word-group';
-                        currentWord.forEach(tokenSpan => wordGroup.appendChild(tokenSpan));
-                        result.push(wordGroup);
-                        currentWord = [];
-                    }
-                    return;
-                }
-
+            const groups = buildWordGroups(state.tokens, (token, idx) => {
                 const isPartOfBestPair = state.bestPair && (
                     (idx < state.tokens.length - 1 && state.tokens[idx] + ' ' + state.tokens[idx + 1] === state.bestPair) ||
                     (idx > 0 && state.tokens[idx - 1] + ' ' + state.tokens[idx] === state.bestPair)
                 );
-
-                const span = document.createElement('span');
-                span.className = 'token' + (isPartOfBestPair ? ' highlight' : '');
-                span.textContent = token;
-                currentWord.push(span);
+                return (token.length > 1 ? ' bpe' : '') + (isPartOfBestPair ? ' highlight' : '');
             });
+            elements.tokensDisplay.replaceChildren(...groups);
+        }
 
-            // Add last word if exists
-            if (currentWord.length > 0) {
-                const wordGroup = document.createElement('div');
-                wordGroup.className = 'word-group';
-                currentWord.forEach(tokenSpan => wordGroup.appendChild(tokenSpan));
-                result.push(wordGroup);
+        // Render the most frequent pairs as bars
+        function renderPairs() {
+            const entries = Object.entries(state.currentPairs);
+            const top = entries.slice().sort((a, b) => b[1] - a[1]).slice(0, TOP_PAIRS);
+            const canMerge = state.vocabulary.size < state.targetVocabSize;
+
+            elements.pairsCount.textContent = plural(entries.length, 'pairForms');
+
+            if (top.length === 0) {
+                elements.pairsList.replaceChildren(el('div', 'empty-state', t('pairsEmpty')));
+                return;
             }
 
-            elements.tokensDisplay.innerHTML = '';
-            result.forEach(el => elements.tokensDisplay.appendChild(el));
+            const max = top[0][1];
+            const rows = top.map(([pair, count]) => {
+                const [token1, token2] = pair.split(' ');
+                const row = el('div', 'pair-row' + (canMerge && pair === state.bestPair ? ' next' : ''));
+                const bar = el('div', 'pair-bar');
+                const fill = el('span');
+                fill.style.width = (count / max * 100) + '%';
+                bar.appendChild(fill);
+                row.append(el('span', 'pair-label', `"${token1}" + "${token2}"`), bar, el('span', 'pair-count', `${count}×`));
+                return row;
+            });
+            elements.pairsList.replaceChildren(...rows);
         }
 
         // Render vocabulary
         function renderVocabulary() {
             // Alphabet tokens (single characters, excluding separator)
             const alphabetVocab = Array.from(state.vocabulary)
-                .filter(t => t !== '|' && t.length === 1)
+                .filter(token => token !== '|' && token.length === 1)
                 .sort();
 
-            elements.alphabetTokens.innerHTML = '';
-            alphabetVocab.forEach(token => {
-                const span = document.createElement('span');
-                span.className = 'vocab-token alphabet';
-                span.textContent = token;
-                elements.alphabetTokens.appendChild(span);
-            });
+            elements.alphabetTokens.replaceChildren(
+                ...alphabetVocab.map(token => el('span', 'vocab-token alphabet', token))
+            );
 
             // BPE tokens (multi-character)
             const bpeVocab = Array.from(state.vocabulary)
-                .filter(t => t !== '|' && t.length > 1)
+                .filter(token => token !== '|' && token.length > 1)
                 .sort((a, b) => {
                     if (a.length !== b.length) return b.length - a.length;
                     return a.localeCompare(b);
                 });
 
             elements.bpeCount.textContent = bpeVocab.length;
+            elements.totalVocabSize.textContent = plural(state.vocabulary.size, 'tokenForms');
 
             if (bpeVocab.length === 0) {
-                elements.bpeTokensContainer.innerHTML = '<div class="empty-state">Click "Step" or "Auto" to start creating tokens</div>';
-            } else {
-                const container = document.createElement('div');
-                container.className = 'vocab-tokens';
-
-                bpeVocab.forEach(token => {
-                    const isNew = state.mergeHistory.length > 0 &&
-                                  state.mergeHistory[state.mergeHistory.length - 1].newToken === token;
-
-                    const span = document.createElement('span');
-                    span.className = 'vocab-token' + (isNew ? ' new' : '');
-                    span.innerHTML = `"${token}"<span class="length">(${token.length})</span>`;
-                    container.appendChild(span);
-                });
-
-                elements.bpeTokensContainer.innerHTML = '';
-                elements.bpeTokensContainer.appendChild(container);
+                elements.bpeTokensContainer.replaceChildren(el('div', 'empty-state', t('emptyBpe')));
+                return;
             }
+
+            const container = el('div', 'vocab-tokens');
+            const newest = state.mergeHistory.length > 0 ? state.mergeHistory[state.mergeHistory.length - 1].newToken : null;
+            bpeVocab.forEach(token => {
+                const chip = el('span', 'vocab-token bpe' + (token === newest ? ' new' : ''), `"${token}"`);
+                chip.appendChild(el('span', 'length', `(${token.length})`));
+                container.appendChild(chip);
+            });
+            elements.bpeTokensContainer.replaceChildren(container);
         }
 
         // Render merge history
@@ -1176,66 +1315,106 @@
             }
 
             elements.historyBox.classList.remove('hidden');
-            elements.historyList.innerHTML = '';
-
-            state.mergeHistory.forEach(merge => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-
+            const rows = state.mergeHistory.map(merge => {
                 const [token1, token2] = merge.pair.split(' ');
-
-                item.innerHTML = `
-                    <div class="history-step">
-                        <span class="step-badge">${merge.step}</span>
-                    </div>
-                    <div class="history-merge">
-                        <span class="token-part">"${token1}"</span><span class="operator">+</span><span class="token-part">"${token2}"</span><span class="operator">→</span><span class="result">"${merge.newToken}"</span>
-                    </div>
-                    <div class="history-frequency">${merge.frequency}×</div>
-                `;
-
-                elements.historyList.appendChild(item);
+                const mergeEl = el('div', 'history-merge');
+                mergeEl.append(
+                    el('span', 'token-part', `"${token1}"`), el('span', 'operator', '+'),
+                    el('span', 'token-part', `"${token2}"`), el('span', 'operator', '→'),
+                    el('span', 'result', `"${merge.newToken}"`)
+                );
+                const item = el('div', 'history-item');
+                item.append(el('span', 'step-badge tone-stone', merge.step), mergeEl, el('span', 'history-frequency', `${merge.frequency}×`));
+                return item;
             });
+            elements.historyList.replaceChildren(...rows);
+        }
+
+        // Render the "new word" demo: the typed text split with the learned merges
+        function renderWord() {
+            const words = elements.wordInput.value.toLowerCase().split(/\s+/).filter(w => w);
+
+            if (words.length === 0) {
+                elements.wordOut.replaceChildren(el('div', 'empty-state', t('wordEmpty')));
+                elements.wordReadout.textContent = '';
+                elements.wordFoot.classList.add('hidden');
+                elements.app.dataset.wordTokens = 0;
+                return;
+            }
+
+            const tokens = [];
+            words.forEach((word, idx) => {
+                tokens.push(...encodeWord(word));
+                if (idx < words.length - 1) tokens.push('|');
+            });
+
+            let hasUnknown = false;
+            const groups = buildWordGroups(tokens, token => {
+                if (token.length > 1) return ' bpe';
+                if (!state.vocabulary.has(token)) { hasUnknown = true; return ' unknown'; }
+                return '';
+            });
+            const count = tokens.filter(token => token !== '|').length;
+
+            elements.wordOut.replaceChildren(...groups);
+            elements.wordReadout.textContent = plural(count, 'tokenForms');
+            elements.wordFoot.classList.toggle('hidden', !hasUnknown);
+            elements.app.dataset.wordTokens = count;
         }
 
         // Update UI
         function updateUI() {
+            const vocabSize = state.vocabulary.size;
+            const targetReached = vocabSize >= state.targetVocabSize;
+
             // Update stats
             elements.stepCount.textContent = state.step;
-            elements.vocabSize.textContent = state.vocabulary.size;
+            const lastMerge = state.mergeHistory[state.mergeHistory.length - 1];
+            elements.stepSub.textContent = lastMerge ? `${t('stepSub')} "${lastMerge.newToken}"` : t('stepSubNone');
+            elements.vocabSize.textContent = vocabSize;
+            elements.vocabBar.style.width = Math.min(100, vocabSize / state.targetVocabSize * 100) + '%';
             elements.tokenCount.textContent = state.tokens.length;
-            elements.totalVocabSize.textContent = state.vocabulary.size;
+
+            const change = state.tokenStart ? Math.round((state.tokenStart - state.tokens.length) / state.tokenStart * 100) : 0;
+            elements.tokenSub.textContent = `${t('startedAt')} ${state.tokenStart} · ${change === 0 ? '0%' : '−' + change + '%'}`;
+
+            // Publish state (DOM contract)
+            elements.app.dataset.step = state.step;
+            elements.app.dataset.vocabSize = vocabSize;
+            elements.app.dataset.target = state.targetVocabSize;
+            elements.app.dataset.tokenCount = state.tokens.length;
+            elements.app.dataset.tokenStart = state.tokenStart;
+            elements.app.dataset.bestPair = state.bestPair || '';
 
             // Update best pair alert
-            if (state.bestPair && state.vocabulary.size < state.targetVocabSize) {
+            if (state.bestPair && !targetReached) {
                 elements.bestPairAlert.classList.remove('hidden');
-                elements.pairFrequency.textContent = state.currentPairs[state.bestPair];
+                elements.pairTitle.textContent = `${t('pairTitle')} (${plural(state.currentPairs[state.bestPair], 'occurrenceForms')})`;
                 const [token1, token2] = state.bestPair.split(' ');
-                elements.pairDisplay.innerHTML = `"${token1}" + "${token2}" → "${token1 + token2}"`;
+                elements.pairDisplay.textContent = `"${token1}" + "${token2}" → "${token1 + token2}"`;
             } else {
                 elements.bestPairAlert.classList.add('hidden');
             }
 
-            // Update completed alert
-            if (state.vocabulary.size >= state.targetVocabSize) {
-                elements.completedAlert.classList.remove('hidden');
-            } else {
-                elements.completedAlert.classList.add('hidden');
-            }
+            // Update completed / no-pairs alerts
+            elements.completedAlert.classList.toggle('hidden', !targetReached);
+            elements.noPairsAlert.classList.toggle('hidden', targetReached || Boolean(state.bestPair));
 
             // Update button states
-            const canPerformMerge = state.vocabulary.size < state.targetVocabSize && state.bestPair;
+            const canPerformMerge = !targetReached && state.bestPair;
             elements.stepBtn.disabled = !canPerformMerge;
             elements.autoBtn.disabled = !canPerformMerge && !state.isPlaying;
 
             // Render
             renderTokens();
+            renderPairs();
             renderVocabulary();
             renderHistory();
+            renderWord();
         }
 
-        // Event Listeners
-        elements.inputText.addEventListener('blur', initializeTokens);
+        // ─── Listeners ───
+        elements.inputText.addEventListener('change', initializeTokens);
 
         elements.targetSlider.addEventListener('input', (e) => {
             state.targetVocabSize = parseInt(e.target.value);
@@ -1247,9 +1426,26 @@
         elements.resetBtn.addEventListener('click', initializeTokens);
         elements.autoBtn.addEventListener('click', toggleAutoPlay);
         elements.stepBtn.addEventListener('click', performMerge);
+        elements.wordInput.addEventListener('input', renderWord);
+        elements.langButtons.forEach(button => {
+            button.addEventListener('click', () => setLang(button.dataset.lang));
+        });
 
-        // Initialize on load
+        addEventListener('load', () => icons());   // the Lucide script is async and may arrive after Init
+
+        // ─── Init ───
+        state.lang = readStoredLang();
+        elements.inputText.value = SAMPLE_TEXT[state.lang];
+        elements.wordInput.value = SAMPLE_WORD[state.lang];
+        applyLang();
         initializeTokens();
+        icons();
+
+        // ─── Reveal ───
+        Promise.race([
+            Promise.all(BRAND_FONTS.map(f => document.fonts.load(f).catch(() => null))),
+            new Promise(r => setTimeout(r, FONT_WAIT_MS)),
+        ]).then(() => document.documentElement.classList.add('app-ready'));
     </script>
 </body>
 </html>

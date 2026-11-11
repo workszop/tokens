@@ -352,8 +352,10 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
             width: 20px; height: 20px; background: var(--surface); cursor: pointer;
             border-radius: 50%; border: 2px solid var(--ink); box-shadow: var(--shadow-sm);
         }
+        .target-hint { margin: 0 0 18px; }
+        .card-hint { margin-top: 14px; }
         .slider-labels {
-            display: flex; justify-content: space-between; margin-bottom: 18px;
+            display: flex; justify-content: space-between; margin-bottom: 8px;
             font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);
             text-transform: uppercase; letter-spacing: .08em;
         }
@@ -507,7 +509,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     <main id="app" data-lang="pl" data-step="0" data-vocab-size="0" data-target="30" data-token-count="0" data-token-start="0" data-playing="false" data-best-pair="" data-word-tokens="0">
         <header class="page-head">
             <h1 class="app-title">Byte Pair Encoding</h1>
-            <p class="edu-lead" data-i18n="lead">Zobacz krok po kroku, jak powstają tokeny, czyli kawałki tekstu, na których pracują GPT i inne modele językowe.</p>
+            <p class="edu-lead" data-i18n="lead">Byte Pair Encoding (BPE) to algorytm, który z przykładowego tekstu buduje słownik tokenów, czyli kawałków tekstu, na których pracują GPT i inne modele językowe. Tutaj zobaczysz krok po kroku, jak taki słownik powstaje.</p>
         </header>
 
         <section class="sec"><div class="wrap">
@@ -519,28 +521,28 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                 <div class="card">
                     <div class="card-head"><span class="tile-h">
                         <span class="badge tone-grape"><i data-lucide="hash" class="ic" aria-hidden="true"></i></span>
-                        <h3 data-i18n="why1Title">Model liczy, nie czyta</h3>
+                        <h3 data-i18n="why1Title">Model działa na liczbach</h3>
                     </span></div>
-                    <div class="card-body"><p data-i18n="why1Text">Tekst trzeba pociąć na kawałki i każdemu nadać numer. Te kawałki to tokeny.</p></div>
+                    <div class="card-body"><p data-i18n="why1Text">Model językowy przetwarza liczby. Żeby dostał tekst, trzeba go najpierw pociąć na kawałki i każdemu kawałkowi przypisać numer ze słownika. Te kawałki to tokeny.</p></div>
                 </div>
                 <div class="card">
                     <div class="card-head"><span class="tile-h">
                         <span class="badge tone-blue"><i data-lucide="whole-word" class="ic" aria-hidden="true"></i></span>
                         <h3 data-i18n="why2Title">Całych słów jest za dużo</h3>
                     </span></div>
-                    <div class="card-body"><p data-i18n="why2Text">Słownik musiałby mieć miliony pozycji, a nowego słowa i tak by w nim zabrakło.</p></div>
+                    <div class="card-body"><p data-i18n="why2Text">Gdyby tokenem było całe słowo, słownik musiałby mieć miliony pozycji. Słowa, którego w nim nie ma, na przykład nowego albo z literówką, model nie umiałby zapisać.</p></div>
                 </div>
                 <div class="card">
                     <div class="card-head"><span class="tile-h">
                         <span class="badge tone-green"><i data-lucide="a-large-small" class="ic" aria-hidden="true"></i></span>
                         <h3 data-i18n="why3Title">Same litery to za mało</h3>
                     </span></div>
-                    <div class="card-body"><p data-i18n="why3Text">Słownik jest mały, ale każde zdanie zamienia się w bardzo długi ciąg.</p></div>
+                    <div class="card-body"><p data-i18n="why3Text">Gdyby tokenem była pojedyncza litera, słownik miałby kilkadziesiąt pozycji. Każde zdanie zamieniałoby się jednak w bardzo długi ciąg, a sama litera niewiele znaczy.</p></div>
                 </div>
             </div>
             <div class="callout tone-yellow edu-block">
                 <i data-lucide="scale" class="ic" aria-hidden="true"></i>
-                <p class="callout-text" data-i18n="whyCallout">BPE wybiera środek: częste fragmenty stają się jednym tokenem, a rzadkie słowa składa się z mniejszych części.</p>
+                <p class="callout-text" data-i18n="whyCallout">BPE wybiera środek. Fragmenty, które często się powtarzają, dostają własny token, a rzadkie słowa składa się z kilku mniejszych części.</p>
             </div>
         </div></section>
 
@@ -550,10 +552,10 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                 <h2 data-i18n="howTitle">Jak to działa</h2>
             </div>
             <ol class="chain">
-                <li class="link"><span class="link-num tone-stone" aria-hidden="true">1</span><span data-i18n="how1">Zacznij od pojedynczych znaków jako tokenów</span></li>
-                <li class="link"><span class="link-num tone-stone" aria-hidden="true">2</span><span data-i18n="how2">Znajdź najczęstszą parę sąsiednich tokenów</span></li>
-                <li class="link"><span class="link-num tone-stone" aria-hidden="true">3</span><span data-i18n="how3">Połącz tę parę w nowy token</span></li>
-                <li class="link"><span class="link-num tone-stone" aria-hidden="true">4</span><span data-i18n="how4">Powtarzaj, aż słownik osiągnie docelowy rozmiar</span></li>
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">1</span><span data-i18n="how1">Podziel tekst na pojedyncze znaki. Na początku każdy znak jest osobnym tokenem.</span></li>
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">2</span><span data-i18n="how2">Policz, jak często dwa tokeny stoją obok siebie, i znajdź najczęstszą parę.</span></li>
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">3</span><span data-i18n="how3">Połącz tę parę w jeden nowy token i dopisz go do słownika.</span></li>
+                <li class="link"><span class="link-num tone-stone" aria-hidden="true">4</span><span data-i18n="how4">Powtarzaj kroki 2 i 3, aż słownik urośnie do docelowego rozmiaru.</span></li>
             </ol>
         </div></section>
 
@@ -570,7 +572,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                             <div>
                                 <label class="field-label" for="inputText" data-i18n="inputLabel">Tekst wejściowy</label>
                                 <textarea id="inputText" rows="4" data-i18n-placeholder="inputPlaceholder" placeholder="Wpisz tekst z powtarzającymi się fragmentami..."></textarea>
-                                <p class="hint" data-i18n="inputHint">Zmień tekst i kliknij poza polem albo naciśnij Reset</p>
+                                <p class="hint" data-i18n="inputHint">Po zmianie tekstu kliknij poza polem albo naciśnij Reset. Wizualizacja zacznie się wtedy od nowa.</p>
                             </div>
                             <div>
                                 <label class="field-label" for="targetSlider"><span data-i18n="targetLabel">Docelowy rozmiar słownika:</span> <span class="target-value" id="targetValue">30</span></label>
@@ -579,6 +581,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                                     <span data-i18n="fewer">Mniej</span>
                                     <span data-i18n="more">Więcej</span>
                                 </div>
+                                <p class="hint target-hint" data-i18n="targetHint">Tyle różnych tokenów ma mieć gotowy słownik. Im większa liczba, tym więcej połączeń wykona algorytm.</p>
                                 <div class="button-group">
                                     <button type="button" class="btn" id="resetBtn">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -635,12 +638,12 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
 
                 <div id="completedAlert" class="callout tone-green edu-block hidden" aria-live="polite">
                     <i data-lucide="circle-check" class="ic" aria-hidden="true"></i>
-                    <div class="callout-title" data-i18n="completed">Słownik osiągnął docelowy rozmiar</div>
+                    <div class="callout-title" data-i18n="completed">Słownik osiągnął docelowy rozmiar. Zwiększ go suwakiem, jeśli chcesz łączyć dalej.</div>
                 </div>
 
                 <div id="noPairsAlert" class="callout tone-stone edu-block hidden" aria-live="polite">
                     <i data-lucide="circle-slash" class="ic" aria-hidden="true"></i>
-                    <div class="callout-title" data-i18n="noPairs">Nie ma już par do połączenia</div>
+                    <div class="callout-title" data-i18n="noPairs">Nie ma już par do połączenia, bo każde słowo jest jednym tokenem.</div>
                 </div>
 
                 <div class="bench">
@@ -654,6 +657,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                             </div>
                             <div class="card-body">
                                 <div class="tokens-display" id="tokensDisplay"></div>
+                                <p class="hint card-hint" data-i18n="tokensHint">Każda ramka to jedno słowo. Żółte tokeny tworzą parę, która zostanie połączona w następnym kroku.</p>
                             </div>
                         </div>
 
@@ -679,6 +683,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                             </div>
                             <div class="card-body">
                                 <div class="pairs" id="pairsList"></div>
+                                <p class="hint card-hint" data-i18n="pairsHint">Liczba pokazuje, ile razy dana para tokenów stoi obok siebie w tekście. Algorytm zawsze łączy najczęstszą.</p>
                             </div>
                             <div class="card-foot">
                                 <div class="legend-item">
@@ -741,12 +746,12 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                                 <input type="text" class="input" id="wordInput" autocomplete="off" spellcheck="false">
                                 <div class="tokens-display word-out" id="wordOut"></div>
                                 <output class="word-readout" id="wordReadout" for="wordInput" aria-live="polite"></output>
-                                <p class="hint" data-i18n="wordHint">Słowo jest dzielone tymi samymi połączeniami i w tej samej kolejności. Im więcej kroków, tym mniej tokenów.</p>
+                                <p class="hint" data-i18n="wordHint">Tak tokenizer dzieli słowo, którego wcześniej nie widział. Zaczyna od liter i wykonuje te same połączenia w tej samej kolejności, więc z każdym krokiem słowo może składać się z mniejszej liczby tokenów.</p>
                             </div>
                             <div class="card-foot hidden" id="wordFoot">
                                 <div class="legend-item">
                                     <div class="legend-box unknown"></div>
-                                    <span data-i18n="legendUnknown">Znaku nie ma w słowniku</span>
+                                    <span data-i18n="legendUnknown">Tego znaku nie ma w słowniku, bo nie wystąpił w tekście</span>
                                 </div>
                             </div>
                         </div>
@@ -778,10 +783,10 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                     </span></div>
                     <div class="card-body">
                         <ul class="checklist">
-                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2a">Tekst jest zamieniany na małe litery.</span></li>
-                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2b">Przy remisie wygrywa para, która pojawiła się w tekście pierwsza.</span></li>
-                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2c">Modele GPT pracują na bajtach, a spację doklejają do początku następnego tokenu.</span></li>
-                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2d">Prawdziwe słowniki są dużo większe: GPT-2 ma 50 257 tokenów wyuczonych na ogromnym zbiorze tekstów.</span></li>
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2a">Tekst jest zamieniany na małe litery. Tokenizery modeli GPT rozróżniają wielkie i małe litery.</span></li>
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2b">Gdy dwie pary występują równie często, wygrywa ta, która pojawiła się w tekście wcześniej.</span></li>
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2c">Modele GPT zaczynają od bajtów zamiast liter, więc potrafią zapisać każdy znak w każdym języku. Spację doklejają do początku następnego tokenu.</span></li>
+                            <li><i data-lucide="check" class="ic" aria-hidden="true"></i><span data-i18n="note2d">Prawdziwe słowniki są dużo większe. GPT-2 ma 50 257 tokenów wyuczonych na ogromnym zbiorze tekstów.</span></li>
                         </ul>
                     </div>
                 </div>
@@ -807,24 +812,25 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
         const T = {
             pl: {
                 docTitle: 'Byte Pair Encoding – wizualizacja',
-                lead: 'Zobacz krok po kroku, jak powstają tokeny, czyli kawałki tekstu, na których pracują GPT i inne modele językowe.',
+                lead: 'Byte Pair Encoding (BPE) to algorytm, który z przykładowego tekstu buduje słownik tokenów, czyli kawałków tekstu, na których pracują GPT i inne modele językowe. Tutaj zobaczysz krok po kroku, jak taki słownik powstaje.',
                 whyTitle: 'Po co tokeny',
-                why1Title: 'Model liczy, nie czyta',
-                why1Text: 'Tekst trzeba pociąć na kawałki i każdemu nadać numer. Te kawałki to tokeny.',
+                why1Title: 'Model działa na liczbach',
+                why1Text: 'Model językowy przetwarza liczby. Żeby dostał tekst, trzeba go najpierw pociąć na kawałki i każdemu kawałkowi przypisać numer ze słownika. Te kawałki to tokeny.',
                 why2Title: 'Całych słów jest za dużo',
-                why2Text: 'Słownik musiałby mieć miliony pozycji, a nowego słowa i tak by w nim zabrakło.',
+                why2Text: 'Gdyby tokenem było całe słowo, słownik musiałby mieć miliony pozycji. Słowa, którego w nim nie ma, na przykład nowego albo z literówką, model nie umiałby zapisać.',
                 why3Title: 'Same litery to za mało',
-                why3Text: 'Słownik jest mały, ale każde zdanie zamienia się w bardzo długi ciąg.',
-                whyCallout: 'BPE wybiera środek: częste fragmenty stają się jednym tokenem, a rzadkie słowa składa się z mniejszych części.',
+                why3Text: 'Gdyby tokenem była pojedyncza litera, słownik miałby kilkadziesiąt pozycji. Każde zdanie zamieniałoby się jednak w bardzo długi ciąg, a sama litera niewiele znaczy.',
+                whyCallout: 'BPE wybiera środek. Fragmenty, które często się powtarzają, dostają własny token, a rzadkie słowa składa się z kilku mniejszych części.',
                 howTitle: 'Jak to działa',
-                how1: 'Zacznij od pojedynczych znaków jako tokenów',
-                how2: 'Znajdź najczęstszą parę sąsiednich tokenów',
-                how3: 'Połącz tę parę w nowy token',
-                how4: 'Powtarzaj, aż słownik osiągnie docelowy rozmiar',
+                how1: 'Podziel tekst na pojedyncze znaki. Na początku każdy znak jest osobnym tokenem.',
+                how2: 'Policz, jak często dwa tokeny stoją obok siebie, i znajdź najczęstszą parę.',
+                how3: 'Połącz tę parę w jeden nowy token i dopisz go do słownika.',
+                how4: 'Powtarzaj kroki 2 i 3, aż słownik urośnie do docelowego rozmiaru.',
                 tryTitle: 'Wypróbuj',
                 inputLabel: 'Tekst wejściowy',
                 inputPlaceholder: 'Wpisz tekst z powtarzającymi się fragmentami...',
-                inputHint: 'Zmień tekst i kliknij poza polem albo naciśnij Reset',
+                inputHint: 'Po zmianie tekstu kliknij poza polem albo naciśnij Reset. Wizualizacja zacznie się wtedy od nowa.',
+                targetHint: 'Tyle różnych tokenów ma mieć gotowy słownik. Im większa liczba, tym więcej połączeń wykona algorytm.',
                 targetLabel: 'Docelowy rozmiar słownika:',
                 fewer: 'Mniej',
                 more: 'Więcej',
@@ -839,11 +845,13 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                 stepSubNone: 'jeszcze bez połączeń',
                 startedAt: 'na starcie',
                 pairTitle: 'Najczęstsza para',
-                completed: 'Słownik osiągnął docelowy rozmiar',
-                noPairs: 'Nie ma już par do połączenia',
+                completed: 'Słownik osiągnął docelowy rozmiar. Zwiększ go suwakiem, jeśli chcesz łączyć dalej.',
+                noPairs: 'Nie ma już par do połączenia, bo każde słowo jest jednym tokenem.',
                 tokensTitle: 'Bieżące tokeny',
+                tokensHint: 'Każda ramka to jedno słowo. Żółte tokeny tworzą parę, która zostanie połączona w następnym kroku.',
                 historyTitle: 'Historia połączeń',
                 pairsTitle: 'Najczęstsze pary',
+                pairsHint: 'Liczba pokazuje, ile razy dana para tokenów stoi obok siebie w tekście. Algorytm zawsze łączy najczęstszą.',
                 pairsEmpty: 'Brak par do policzenia',
                 legendNext: 'Następne połączenie',
                 vocabTitle: 'Słownik',
@@ -856,42 +864,43 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                 legendNew: 'Nowo utworzony',
                 wordTitle: 'Nowe słowo',
                 wordLabel: 'Słowo, którego nie było w tekście',
-                wordHint: 'Słowo jest dzielone tymi samymi połączeniami i w tej samej kolejności. Im więcej kroków, tym mniej tokenów.',
+                wordHint: 'Tak tokenizer dzieli słowo, którego wcześniej nie widział. Zaczyna od liter i wykonuje te same połączenia w tej samej kolejności, więc z każdym krokiem słowo może składać się z mniejszej liczby tokenów.',
                 wordEmpty: 'Wpisz słowo',
-                legendUnknown: 'Znaku nie ma w słowniku',
+                legendUnknown: 'Tego znaku nie ma w słowniku, bo nie wystąpił w tekście',
                 noteTitle: 'Uwagi techniczne',
                 note1Title: 'Granice słów',
                 note1p1: 'Ta wizualizacja pomija znacznik końca słowa (zwykle zapisywany jako <code>&lt;/w&gt;</code>). W klasycznym BPE ostatni znak każdego słowa dostaje taki symbol, więc algorytm odróżnia „er” na końcu słowa („lower”) od „er” w środku („merry”).',
                 note1p2: 'Dzięki temu BPE nie łączy tokenów ponad granicami słów. W tej aplikacji robi to separator <code>|</code> wstawiany między słowa. Na ekranie go nie widać.',
                 note2Title: 'Demo a prawdziwe modele',
-                note2a: 'Tekst jest zamieniany na małe litery.',
-                note2b: 'Przy remisie wygrywa para, która pojawiła się w tekście pierwsza.',
-                note2c: 'Modele GPT pracują na bajtach, a spację doklejają do początku następnego tokenu.',
-                note2d: 'Prawdziwe słowniki są dużo większe: GPT-2 ma 50 257 tokenów wyuczonych na ogromnym zbiorze tekstów.',
+                note2a: 'Tekst jest zamieniany na małe litery. Tokenizery modeli GPT rozróżniają wielkie i małe litery.',
+                note2b: 'Gdy dwie pary występują równie często, wygrywa ta, która pojawiła się w tekście wcześniej.',
+                note2c: 'Modele GPT zaczynają od bajtów zamiast liter, więc potrafią zapisać każdy znak w każdym języku. Spację doklejają do początku następnego tokenu.',
+                note2d: 'Prawdziwe słowniki są dużo większe. GPT-2 ma 50 257 tokenów wyuczonych na ogromnym zbiorze tekstów.',
                 tokenForms: ['token', 'tokeny', 'tokenów'],
                 occurrenceForms: ['wystąpienie', 'wystąpienia', 'wystąpień'],
                 pairForms: ['para', 'pary', 'par']
             },
             en: {
                 docTitle: 'Byte Pair Encoding Visualizer',
-                lead: 'See step by step how tokens are made: the pieces of text that GPT and other language models work on.',
+                lead: 'Byte Pair Encoding (BPE) is an algorithm that builds a vocabulary of tokens from a sample text. Tokens are the pieces of text that GPT and other language models work on. Here you can watch, step by step, how such a vocabulary is made.',
                 whyTitle: 'Why tokens',
-                why1Title: 'Models count, they do not read',
-                why1Text: 'Text has to be cut into pieces and each piece gets a number. Those pieces are tokens.',
+                why1Title: 'A model works on numbers',
+                why1Text: 'A language model processes numbers. Before it can take in text, the text has to be cut into pieces and each piece given a number from a vocabulary. Those pieces are tokens.',
                 why2Title: 'Whole words are too many',
-                why2Text: 'The vocabulary would need millions of entries, and a new word would still be missing.',
+                why2Text: 'If a token were a whole word, the vocabulary would need millions of entries. A word that is not in it, such as a new one or one with a typo, could not be written at all.',
                 why3Title: 'Single letters are too few',
-                why3Text: 'The vocabulary is small, but every sentence turns into a very long sequence.',
-                whyCallout: 'BPE takes the middle road: frequent fragments become one token, and rare words are built from smaller parts.',
+                why3Text: 'If a token were a single letter, the vocabulary would have a few dozen entries. But every sentence would turn into a very long sequence, and one letter means little by itself.',
+                whyCallout: 'BPE takes the middle road. Fragments that repeat often get their own token, and rare words are built from a few smaller parts.',
                 howTitle: 'How it works',
-                how1: 'Start with individual characters as tokens',
-                how2: 'Find the most frequent pair of adjacent tokens',
-                how3: 'Merge that pair into a new token',
-                how4: 'Repeat until reaching the target vocabulary size',
+                how1: 'Split the text into single characters. At the start, every character is a separate token.',
+                how2: 'Count how often two tokens stand next to each other and find the most frequent pair.',
+                how3: 'Merge that pair into one new token and add it to the vocabulary.',
+                how4: 'Repeat steps 2 and 3 until the vocabulary grows to the target size.',
                 tryTitle: 'Try it',
                 inputLabel: 'Input text',
                 inputPlaceholder: 'Enter text with repeating patterns...',
-                inputHint: 'Change text and click outside or press Reset',
+                inputHint: 'After changing the text, click outside the field or press Reset. The visualization then starts over.',
+                targetHint: 'This is how many different tokens the finished vocabulary should have. The larger the number, the more merges the algorithm makes.',
                 targetLabel: 'Target vocabulary size:',
                 fewer: 'Fewer',
                 more: 'More',
@@ -906,11 +915,13 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                 stepSubNone: 'no merges yet',
                 startedAt: 'started at',
                 pairTitle: 'Most frequent pair',
-                completed: 'Target vocabulary size reached',
-                noPairs: 'No pairs left to merge',
+                completed: 'The vocabulary has reached the target size. Raise it with the slider to keep merging.',
+                noPairs: 'No pairs are left to merge, because every word is a single token.',
                 tokensTitle: 'Current tokens',
+                tokensHint: 'Each frame is one word. The yellow tokens form the pair that will be merged in the next step.',
                 historyTitle: 'Merge history',
                 pairsTitle: 'Most frequent pairs',
+                pairsHint: 'The number shows how many times a pair of tokens stands side by side in the text. The algorithm always merges the most frequent one.',
                 pairsEmpty: 'No pairs to count',
                 legendNext: 'Next merge',
                 vocabTitle: 'Vocabulary',
@@ -923,18 +934,18 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
                 legendNew: 'Newly created',
                 wordTitle: 'A new word',
                 wordLabel: 'A word that was not in the text',
-                wordHint: 'The word is split with the same merges, in the same order. More steps, fewer tokens.',
+                wordHint: 'This is how a tokenizer splits a word it has not seen before. It starts from letters and applies the same merges in the same order, so with each step the word may need fewer tokens.',
                 wordEmpty: 'Type a word',
-                legendUnknown: 'Character is not in the vocabulary',
+                legendUnknown: 'This character is not in the vocabulary, because it did not occur in the text',
                 noteTitle: 'Technical notes',
                 note1Title: 'Word boundaries',
                 note1p1: 'This visualization omits the end-of-word marker (typically denoted as <code>&lt;/w&gt;</code>) for clarity. In classic BPE, each word\'s final character is marked with a special symbol, allowing the algorithm to distinguish tokens like "er" at the end of a word ("lower") from "er" in the middle ("merry").',
                 note1p2: 'This ensures BPE knows not to merge tokens across word boundaries. In this app, a <code>|</code> separator between words does that job. It is hidden from display.',
                 note2Title: 'Demo vs real models',
-                note2a: 'The text is lowercased.',
-                note2b: 'On a tie, the pair that appeared first in the text wins.',
-                note2c: 'GPT models work on bytes and attach the space to the start of the next token.',
-                note2d: 'Real vocabularies are far larger: GPT-2 has 50,257 tokens learned from a huge collection of text.',
+                note2a: 'The text is lowercased. The tokenizers of GPT models distinguish upper and lower case.',
+                note2b: 'When two pairs are equally frequent, the one that appeared earlier in the text wins.',
+                note2c: 'GPT models start from bytes instead of letters, so they can write any character in any language. They attach the space to the start of the next token.',
+                note2d: 'Real vocabularies are far larger. GPT-2 has 50,257 tokens learned from a huge collection of text.',
                 tokenForms: ['token', 'tokens'],
                 occurrenceForms: ['occurrence', 'occurrences'],
                 pairForms: ['pair', 'pairs']
